@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Reviewer Pro | Vercel</title>
+    <title>Chess Reviewer Pro | Anti-Blank</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    
     <style>
         :root { --bg: #161512; --panel: #262421; --accent: #81b64c; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
         .container { width: 100%; max-width: 380px; }
-        #board { width: 100%; border-radius: 4px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #board { width: 100%; border: 2px solid #333; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
-        .panel { background: var(--panel); margin-top: 15px; padding: 15px; border-radius: 8px; box-sizing: border-box; }
-        .eval-box { text-align: center; background: #1a1917; padding: 10px; border-radius: 4px; margin-bottom: 15px; border-left: 5px solid var(--accent); }
+        .panel { background: var(--panel); margin-top: 15px; padding: 15px; border-radius: 12px; box-sizing: border-box; }
+        .eval-box { text-align: center; background: #1a1917; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid var(--accent); }
         #score { font-size: 32px; font-weight: bold; }
         
         .badge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .badge { font-size: 10px; padding: 10px; text-align: center; font-weight: bold; border-radius: 4px; opacity: 0.1; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
-        .active { opacity: 1; transform: scale(1.05); border: 1px solid white; box-shadow: 0 0 10px rgba(129, 182, 76, 0.5); }
+        .badge { font-size: 10px; padding: 12px; text-align: center; font-weight: bold; border-radius: 6px; opacity: 0.1; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+        .active { opacity: 1; transform: scale(1.05); border: 1px solid white; box-shadow: 0 0 15px var(--accent); }
 
         .brilliant { background: #01ebbb; color: #000; }
         .great { background: #5b89b1; }
@@ -28,11 +29,11 @@
         .mistake { background: #f6c045; color: #000; }
         .blunder { background: #f9412d; }
 
-        textarea { width: 100%; height: 60px; background: #000; color: #81b64c; border: 1px solid #444; border-radius: 4px; padding: 8px; font-size: 11px; margin-bottom: 10px; box-sizing: border-box; resize: none; }
-        button { cursor: pointer; border: none; font-weight: bold; border-radius: 4px; width: 100%; padding: 15px; margin-bottom: 10px; font-size: 14px; }
+        textarea { width: 100%; height: 60px; background: #000; color: #fff; border: 1px solid #444; border-radius: 6px; padding: 8px; font-size: 11px; margin-bottom: 10px; box-sizing: border-box; resize: none; }
+        button { cursor: pointer; border: none; font-weight: bold; border-radius: 6px; width: 100%; padding: 15px; margin-bottom: 10px; font-size: 14px; }
         .btn-main { background: var(--accent); color: white; }
         .nav-wrap { display: flex; gap: 10px; }
-        .btn-nav { background: #3c3a37; color: white; flex: 1; }
+        .btn-nav { background: #3c3a37; color: white; flex: 1; height: 55px; }
     </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
         <div class="panel">
             <div class="eval-box">
                 <div id="score">0.30</div>
-                <small id="status">Ready to Analyze</small>
+                <small id="status">Stockfish Engine Ready</small>
             </div>
 
             <div class="badge-grid">
@@ -55,9 +56,8 @@
                 <div id="m-blunder" class="badge blunder">?? BLUNDER</div>
             </div>
 
-            <textarea id="pgnInput" placeholder="Tempel PGN Game Anda di sini..."></textarea>
-            
-            <button class="btn-main" onclick="importGame()">IMPORT & ANALYZE</button>
+            <textarea id="pgnInput" placeholder="Paste PGN here..."></textarea>
+            <button class="btn-main" onclick="importGame()">IMPORT & REVIEW</button>
             
             <div class="nav-wrap">
                 <button class="btn-nav" onclick="move(-1)">PREV</button>
@@ -74,18 +74,23 @@
         let board, game = new Chess(), history = [], index = -1, lastScore = 0.3;
         const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js");
 
+        // FUNGSI KUNCI: Template gambar bidak menggunakan SVG (Tidak butuh file luar)
+        function pieceTheme(piece) {
+            return 'https://raw.githubusercontent.com/oakmac/chessboardjs/master/website/img/chesspieces/wikipedia/' + piece + '.png';
+        }
+
         function init() {
-            // FIX: Menggunakan Piece Theme dari URL yang paling stabil
             board = Chessboard('board', {
                 position: 'start',
                 draggable: true,
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+                // Menggunakan CDN GitHub yang lebih stabil untuk gambar bidak
+                pieceTheme: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/{piece}.png'
             });
             $(window).resize(board.resize);
         }
 
         function analyze(fen, san) {
-            document.getElementById('status').innerText = "Stockfish is thinking...";
+            document.getElementById('status').innerText = "Analyzing...";
             stockfish.postMessage('position fen ' + fen);
             stockfish.postMessage('go depth 13');
             
@@ -95,7 +100,6 @@
                     let score = (cp / 100).toFixed(2);
                     document.getElementById('score').innerText = score > 0 ? '+' + score : score;
                     
-                    // Logic Badge
                     let diff = Math.abs(lastScore - score);
                     $('.badge').removeClass('active');
 
@@ -107,22 +111,15 @@
                     else $('#m-great').addClass('active');
 
                     lastScore = parseFloat(score);
-                    document.getElementById('status').innerText = "Analysis Finished";
+                    document.getElementById('status').innerText = "Analysis Ready";
                 }
             };
         }
 
         function importGame() {
-            const pgn = document.getElementById('pgnInput').value;
-            if (game.load_pgn(pgn)) {
+            if (game.load_pgn(document.getElementById('pgnInput').value)) {
                 history = game.history({ verbose: true });
-                game.reset();
-                index = -1;
-                board.start();
-                lastScore = 0.3;
-                alert("Game Imported! Klik NEXT untuk review.");
-            } else {
-                alert("PGN Tidak Valid!");
+                game.reset(); index = -1; board.start(); lastScore = 0.3;
             }
         }
 
@@ -133,10 +130,7 @@
                 board.position(game.fen());
                 analyze(game.fen(), history[index].san);
             } else if (d === -1 && index >= 0) {
-                game.undo();
-                index--;
-                board.position(game.fen());
-                document.getElementById('score').innerText = "...";
+                game.undo(); index--; board.position(game.fen());
             }
         }
 
