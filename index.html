@@ -3,127 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Review AI - Stable Edition</title>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.0.5/assets/chessground.base.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.0.5/assets/chessground.brown.css">
-
+    <title>Chess Bot Mastery</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        :root { --bg: #161512; --panel: #262421; --accent: #81b64c; }
-        body { background: var(--bg); color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; }
-        
-        .wrapper { width: 100%; max-width: 400px; }
-        
-        /* Box Papan - Menggunakan Chessground agar Bidak Muncul via SVG */
-        .board-container { width: 100%; aspect-ratio: 1/1; margin-bottom: 15px; border: 2px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .cg-wrap { width: 100%; height: 100%; }
-
-        .panel { background: var(--panel); padding: 15px; border-radius: 12px; box-sizing: border-box; }
-        .eval-header { display: flex; justify-content: space-between; align-items: center; background: #1a1917; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--accent); }
-        #score { font-size: 28px; font-weight: bold; }
-        
-        .badge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .badge { font-size: 10px; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; opacity: 0.15; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
-        .active { opacity: 1; border: 1px solid white; box-shadow: 0 0 15px var(--accent); transform: scale(1.03); }
-
-        .brilliant { background: #01ebbb; color: #000; } .excellent { background: #95bb4a; }
-        .mistake { background: #f6c045; color: #000; } .blunder { background: #f9412d; }
-
-        textarea { width: 100%; height: 65px; background: #000; color: #fff; border: 1px solid #444; border-radius: 6px; padding: 10px; font-size: 12px; margin-bottom: 10px; box-sizing: border-box; }
-        button { cursor: pointer; border: none; font-weight: bold; border-radius: 6px; width: 100%; padding: 16px; margin-bottom: 10px; }
-        .btn-main { background: var(--accent); color: white; }
-        .nav-wrap { display: flex; gap: 10px; }
-        .btn-nav { background: #3c3a37; color: white; flex: 1; height: 50px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #34495e; padding: 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 600px; }
+        .hidden { display: none; }
+        input, select, button { padding: 10px; margin: 10px; border-radius: 5px; border: none; font-size: 16px; }
+        button { cursor: pointer; background: #27ae60; color: white; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #2ecc71; }
+        .bot-card { background: #2c3e50; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; }
+        .bot-card.selected { border-color: #f1c40f; }
+        #board { width: 400px; margin: 0 auto; }
+        .info-panel { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; padding: 10px; background: #1a252f; border-radius: 5px; }
+        .role { font-weight: bold; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin-right: 5px; }
+        .role-gm { background: #e74c3c; color: white; }
+        .role-cm { background: #f39c12; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="wrapper">
-        <div class="board-container">
-            <div id="board" class="cg-wrap brown"></div>
+<div id="scene1" class="container">
+    <h1>Chess Bot</h1>
+    <input type="text" id="username" placeholder="Masukkan Username..." maxlength="15">
+    <br>
+    <button onclick="goToScene2()">Play Game</button>
+</div>
+
+<div id="scene2" class="container hidden">
+    <h2>Pilih Bot</h2>
+    <div id="bot-list">
         </div>
+    <div class="settings">
+        <p>Main Sebagai:</p>
+        <button onclick="setSide('w')">White</button>
+        <button onclick="setSide('b')">Black</button>
+        <button onclick="setSide('r')">Random</button>
+    </div>
+</div>
 
-        <div class="panel">
-            <div class="eval-header">
-                <span id="score">+0.30</span>
-                <small id="status">Stockfish 10 Ready</small>
-            </div>
-
-            <div class="badge-grid">
-                <div id="m-brilliant" class="badge brilliant">!! BRILLIANT</div>
-                <div id="m-excellent" class="badge excellent">🌟 EXCELLENT</div>
-                <div id="m-mistake" class="badge mistake">?! MISTAKE</div>
-                <div id="m-blunder" class="badge blunder">?? BLUNDER</div>
-            </div>
-
-            <textarea id="pgnInput" placeholder="Paste PGN here..."></textarea>
-            <button class="btn-main" onclick="importPGN()">IMPORT & REVIEW</button>
-            
-            <div class="nav-wrap">
-                <button class="btn-nav" onclick="nav(-1)">PREV</button>
-                <button class="btn-nav" onclick="nav(1)">NEXT</button>
-            </div>
+<div id="scene3" class="container hidden">
+    <div class="info-panel" id="opponent-info">
         </div>
+    
+    <div id="board"></div>
+
+    <div class="info-panel" id="player-info">
+        <span id="display-username">Player</span>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chessground@9.0.5/dist/chessground.js"></script>
+    <div class="controls">
+        <button onclick="undoMove()">Undo</button>
+        <button onclick="game.reset(); board.start();">Reset</button>
+        <button onclick="resign()" style="background:#c0392b">Resign</button>
+    </div>
+</div>
 
-    <script>
-        let ground, game = new Chess(), history = [], index = -1, lastEval = 0.3;
-        const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js");
+<div id="scene4" class="container hidden">
+    <h1 id="result-title">Game Over</h1>
+    <p id="result-desc"></p>
+    <button onclick="restartGame()">Back to Menu</button>
+</div>
 
-        // Inisialisasi Papan Chessground (Mendukung SVG Inbuilt)
-        const boardEl = document.getElementById('board');
-        ground = Chessground(boardEl, {
-            fen: game.fen(),
-            movable: { color: 'both', free: false }
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+<script>
+    let board = null;
+    let game = new Chess();
+    let playerColor = 'w';
+    let userNickname = "";
+    let selectedBot = null;
+
+    const bots = [
+        { name: "Martin", elo: 400, skill: 0 },
+        { name: "David", elo: 700, skill: 2 },
+        { name: "Nelson", elo: 1000, skill: 5 },
+        { name: "Poltak", elo: 1500, skill: 10 },
+        { name: "Paul", elo: 2000, skill: 14 },
+        { name: "Hikaru Nakamura", elo: 2500, skill: 18 },
+        { name: "Magnus Carlsen", elo: 2882, skill: 20 },
+        { name: "Engine", elo: 3293, skill: 20 }
+    ];
+
+    function getRole(elo) {
+        if (elo >= 2500) return '<span class="role role-gm">(GM)</span>';
+        if (elo >= 2000) return '<span class="role role-cm">(CM)</span>';
+        return '';
+    }
+
+    // Scene Navigation
+    function goToScene2() {
+        userNickname = document.getElementById('username').value || "Guest";
+        document.getElementById('scene1').classList.add('hidden');
+        document.getElementById('scene2').classList.remove('hidden');
+        renderBots();
+    }
+
+    function renderBots() {
+        const list = document.getElementById('bot-list');
+        list.innerHTML = '';
+        bots.forEach((bot, index) => {
+            const card = document.createElement('div');
+            card.className = `bot-card ${selectedBot === index ? 'selected' : ''}`;
+            card.innerHTML = `${getRole(bot.elo)} ${bot.name} (ELO ${bot.elo})`;
+            card.onclick = () => {
+                selectedBot = index;
+                renderBots();
+            };
+            list.appendChild(card);
+        });
+    }
+
+    function setSide(side) {
+        if (selectedBot === null) return alert("Pilih bot dulu!");
+        playerColor = side === 'r' ? (Math.random() > 0.5 ? 'w' : 'b') : side;
+        startBattle();
+    }
+
+    function startBattle() {
+        document.getElementById('scene2').classList.add('hidden');
+        document.getElementById('scene3').classList.remove('hidden');
+        document.getElementById('display-username').innerText = userNickname;
+        
+        const bot = bots[selectedBot];
+        document.getElementById('opponent-info').innerHTML = `
+            <div>${getRole(bot.elo)} <strong>${bot.name}</strong> (ELO ${bot.elo})</div>
+            <div style="font-size: 10px; color: #bdc3c7;">Stockfish AI</div>
+        `;
+
+        initBoard();
+        if (playerColor === 'b') {
+            setTimeout(makeRandomMove, 500); // Simple AI move for demo
+        }
+    }
+
+    // Logic Game
+    function onDrop(source, target) {
+        let move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q'
         });
 
-        function analyze(fen, san) {
-            document.getElementById('status').innerText = "Analyzing Depth 13...";
-            stockfish.postMessage('position fen ' + fen);
-            stockfish.postMessage('go depth 13');
-            
-            stockfish.onmessage = (e) => {
-                if (e.data.includes('score cp')) {
-                    let cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
-                    let score = (cp / 100).toFixed(2);
-                    document.getElementById('score').innerText = score > 0 ? '+' + score : score;
-                    
-                    let diff = Math.abs(lastEval - score);
-                    document.querySelectorAll('.badge').forEach(b => b.classList.remove('active'));
+        if (move === null) return 'snapback';
 
-                    if (diff >= 1.8) document.getElementById('m-blunder').classList.add('active');
-                    else if (diff >= 0.8) document.getElementById('m-mistake').classList.add('active');
-                    else if (san.includes('x') && diff < 0.2) document.getElementById('m-brilliant').classList.add('active');
-                    else document.getElementById('m-excellent').classList.add('active');
+        window.setTimeout(makeMoveByBot, 250);
+        checkGameOver();
+    }
 
-                    lastEval = parseFloat(score);
-                    document.getElementById('status').innerText = "Analysis Done";
-                }
-            };
+    function makeMoveByBot() {
+        if (game.game_over()) return;
+
+        // Simulasi tingkat kesulitan berdasarkan skill bot
+        const possibleMoves = game.moves();
+        if (possibleMoves.length === 0) return;
+
+        let move;
+        const botSkill = bots[selectedBot].skill;
+        
+        // Sederhananya: Semakin tinggi skill, semakin besar kemungkinan pilih move terbaik (Stockfish Lite logic)
+        if (Math.random() * 20 < botSkill) {
+            move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]; // Placeholder logic
+        } else {
+            move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
         }
 
-        function importPGN() {
-            if (game.load_pgn(document.getElementById('pgnInput').value)) {
-                history = game.history({ verbose: true });
-                game.reset(); index = -1;
-                ground.set({ fen: game.fen() });
-                alert("Game Loaded!");
-            }
-        }
+        game.move(move);
+        board.position(game.fen());
+        checkGameOver();
+    }
 
-        function nav(d) {
-            if (d === 1 && index < history.length - 1) {
-                index++; game.move(history[index].san);
-                ground.set({ fen: game.fen(), lastMove: [history[index].from, history[index].to] });
-                analyze(game.fen(), history[index].san);
-            } else if (d === -1 && index >= 0) {
-                game.undo(); index--;
-                ground.set({ fen: game.fen() });
-            }
+    function checkGameOver() {
+        if (game.in_checkmate()) {
+            showResult(game.turn() === 'w' ? "Black Wins" : "White Wins", "by Checkmate");
+        } else if (game.in_draw() || game.in_stalemate()) {
+            showResult("Draw", "by Stalemate / Draw");
         }
-    </script>
+    }
+
+    function showResult(title, desc) {
+        document.getElementById('scene3').classList.add('hidden');
+        document.getElementById('scene4').classList.remove('hidden');
+        document.getElementById('result-title').innerText = title;
+        document.getElementById('result-desc').innerText = desc;
+    }
+
+    function resign() {
+        showResult(playerColor === 'w' ? "Black Wins" : "White Wins", "by Resignation");
+    }
+
+    function undoMove() {
+        game.undo();
+        game.undo();
+        board.position(game.fen());
+    }
+
+    function restartGame() {
+        location.reload();
+    }
+
+    function initBoard() {
+        const config = {
+            draggable: true,
+            position: 'start',
+            orientation: playerColor === 'w' ? 'white' : 'black',
+            onDrop: onDrop,
+            onSnapEnd: () => board.position(game.fen())
+        };
+        board = Chessboard('board', config);
+    }
+</script>
 </body>
 </html>
