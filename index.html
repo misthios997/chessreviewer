@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Reviewer Pro - Stockfish 100%</title>
+    <title>Chess Reviewer Mobile</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -11,194 +11,182 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
     <style>
-        :root { --bg: #262421; --panel: #312e2b; --accent: #81b64c; --text: #bababa; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .main-layout { display: flex; gap: 20px; max-width: 1100px; width: 100%; flex-wrap: wrap; }
-        
-        /* Board & Controls */
-        #board { width: 450px; border: 4px solid #403d39; border-radius: 4px; }
-        .controls { width: 450px; margin-top: 15px; }
-        
-        /* Sidebar Panel */
-        .info-panel { flex: 1; min-width: 350px; background: var(--panel); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .input-group { margin-bottom: 15px; display: flex; gap: 5px; }
-        input, textarea { flex: 1; background: #2a2825; border: 1px solid #403d39; color: white; padding: 8px; border-radius: 4px; }
-        button { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #a3d16a; }
+        :root { --bg: #262421; --panel: #312e2b; --accent: #81b64c; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: var(--bg); color: white; margin: 0; 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 10px; box-sizing: border-box;
+        }
 
-        /* Review List */
-        .game-list { max-height: 150px; overflow-y: auto; background: #2a2825; margin-bottom: 15px; padding: 5px; font-size: 13px; }
-        .game-item { padding: 8px; border-bottom: 1px solid #3d3a37; cursor: pointer; }
-        .game-item:hover { background: #3d3a37; }
+        /* PERBAIKAN UTAMA: Ukuran Board Responsif */
+        #board-container {
+            width: 100%;
+            max-width: 400px; /* Maksimal lebar di HP */
+            margin-bottom: 15px;
+        }
+        #board { width: 100% !important; }
+
+        .info-panel { 
+            width: 100%; max-width: 400px; 
+            background: var(--panel); padding: 15px; 
+            border-radius: 8px; box-sizing: border-box;
+        }
+
+        .input-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        input, textarea { 
+            flex: 1; background: #2a2825; border: 1px solid #403d39; 
+            color: white; padding: 10px; border-radius: 4px; font-size: 14px;
+        }
+
+        button { 
+            background: var(--accent); color: white; border: none; 
+            padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; 
+        }
+
+        .game-list { 
+            max-height: 120px; overflow-y: auto; background: #1b1a17; 
+            margin: 10px 0; border-radius: 4px; font-size: 12px;
+        }
+        .game-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
+
+        .analysis-log { 
+            height: 200px; overflow-y: auto; background: #1b1a17; 
+            padding: 10px; border-radius: 4px; font-size: 13px; font-family: monospace;
+        }
         
-        .analysis-log { height: 300px; overflow-y: auto; background: #1b1a17; padding: 10px; border-radius: 4px; font-size: 14px; }
-        .move-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #2a2825; }
-        
-        /* Badges */
-        .brilliant { color: #15d0b1; } .best { color: #95bb4a; } .inaccuracy { color: #f0c15c; }
-        .mistake { color: #ffa459; } .blunder { color: #fa4143; } .book { color: #d5a47d; }
+        /* Analysis Colors */
+        .brilliant { color: #15d0b1; font-weight: bold; }
+        .blunder { color: #fa4143; font-weight: bold; }
+        .mistake { color: #ffa459; }
+        .best { color: #95bb4a; }
+
+        h2 { font-size: 1.2rem; margin: 10px 0; }
     </style>
 </head>
 <body>
 
-<h1>♟️ Chess Reviewer <span style="color:var(--accent)">Stockfish</span></h1>
+    <h2>♟️ Chess Reviewer Pro</h2>
 
-<div class="main-layout">
-    <div>
+    <div id="board-container">
         <div id="board"></div>
-        <div class="controls">
-            <div class="input-group">
-                <input type="text" id="username" placeholder="Chess.com Username">
-                <button onclick="fetchChessComGames()">Load Games</button>
-            </div>
-            <textarea id="pgnInput" rows="3" placeholder="Paste PGN manually..."></textarea>
-            <div class="input-group" style="margin-top:5px">
-                <button onclick="loadPgn()" style="width: 100%;">Analyze Manually</button>
-            </div>
-        </div>
     </div>
 
     <div class="info-panel">
-        <h3>Chess.com Recent Games</h3>
-        <div id="gameList" class="game-list">No games loaded.</div>
+        <div class="input-group">
+            <input type="text" id="username" placeholder="Username Chess.com">
+            <button onclick="fetchGames()">Load</button>
+        </div>
         
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Review Analysis</h3>
-            <span id="evalScore" style="font-weight: bold; font-size: 1.2em;">0.0</span>
+        <div id="gameList" class="game-list"></div>
+
+        <textarea id="pgnInput" rows="2" placeholder="Atau paste PGN di sini..."></textarea>
+        <button onclick="loadPgn()" style="width:100%; margin-top:5px;">Analyze Review</button>
+
+        <div style="display:flex; justify-content:space-between; margin-top:15px;">
+            <span>Review Analysis</span>
+            <span id="evalScore" style="color:var(--accent)">0.0</span>
         </div>
-        <div id="analysisLog" class="analysis-log">
-            Select a game or paste PGN to start analysis...
-        </div>
+        <div id="analysisLog" class="analysis-log"></div>
     </div>
-</div>
 
 <script>
     let board = null;
     let game = new Chess();
-    // Engine Stockfish Worker
     let engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
     let moveHistory = [];
-    let currentReviewIndex = 0;
-    let lastScore = 0.3; // Rata-rata evaluasi awal
+    let currentIdx = 0;
+    let lastEval = 0.3;
 
-    board = Chessboard('board', {
-        position: 'start',
-        draggable: true,
-        onDrop: (s, t) => {
-            let move = game.move({ from: s, to: t, promotion: 'q' });
-            if (move === null) return 'snapback';
-            startSingleAnalysis();
-        }
-    });
-
-    // 1. Ambil data dari Chess.com API
-    async function fetchChessComGames() {
-        const user = document.getElementById('username').value;
-        if (!user) return alert("Tulis username!");
-        
-        const listEl = document.getElementById('gameList');
-        listEl.innerHTML = "Loading...";
-
-        try {
-            const date = new Date();
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            
-            const response = await fetch(`https://api.chess.com/pub/player/${user}/games/${year}/${month}`);
-            const data = await response.json();
-            
-            listEl.innerHTML = "";
-            data.games.reverse().slice(0, 10).forEach((g, i) => {
-                const item = document.createElement('div');
-                item.className = 'game-item';
-                item.innerHTML = `<strong>vs ${g.white.username === user ? g.black.username : g.white.username}</strong> (${g.time_control})`;
-                item.onclick = () => {
-                    document.getElementById('pgnInput').value = g.pgn;
-                    loadPgn();
-                };
-                listEl.appendChild(item);
-            });
-        } catch (e) {
-            listEl.innerHTML = "Gagal memuat game. Cek username.";
-        }
+    // Inisialisasi Board dengan ukuran otomatis
+    function initBoard() {
+        board = Chessboard('board', {
+            position: 'start',
+            draggable: true,
+            onDrop: (s, t) => {
+                let move = game.move({ from: s, to: t, promotion: 'q' });
+                if (move === null) return 'snapback';
+                analyzeSingle();
+            }
+        });
+        $(window).resize(board.resize); // Biar responsif kalau layar diputar
     }
 
-    // 2. Load PGN & Mulai Review
+    async function fetchGames() {
+        const user = $('#username').val();
+        const list = $('#gameList').html("Loading...");
+        try {
+            const date = new Date();
+            const res = await fetch(`https://api.chess.com/pub/player/${user}/games/${date.getFullYear()}/${String(date.getMonth()+1).padStart(2,'0')}`);
+            const data = await res.json();
+            list.html("");
+            data.games.reverse().slice(0, 5).forEach(g => {
+                $(`<div class="game-item">vs ${g.white.username === user ? g.black.username : g.white.username}</div>`)
+                .click(() => { $('#pgnInput').val(g.pgn); loadPgn(); })
+                .appendTo(list);
+            });
+        } catch(e) { list.html("Gagal ambil data."); }
+    }
+
     function loadPgn() {
-        const pgn = document.getElementById('pgnInput').value;
-        if (game.load_pgn(pgn)) {
+        if (game.load_pgn($('#pgnInput').val())) {
             board.position(game.fen());
             moveHistory = game.history();
             game.reset();
-            document.getElementById('analysisLog').innerHTML = "Memulai Review Otomatis...";
-            currentReviewIndex = 0;
-            lastScore = 0.3;
-            processNextMove();
-        } else {
-            alert("PGN Error!");
+            currentIdx = 0;
+            $('#analysisLog').html("Menganalisis...");
+            runReview();
         }
     }
 
-    // 3. Analisis Langkah demi Langkah (Otomatis)
-    function processNextMove() {
-        if (currentReviewIndex >= moveHistory.length) {
-            document.getElementById('analysisLog').innerHTML += "<div style='color:var(--accent)'><b>Review Selesai!</b></div>";
-            return;
-        }
-
-        let move = moveHistory[currentReviewIndex];
+    function runReview() {
+        if (currentIdx >= moveHistory.length) return;
+        let move = moveHistory[currentIdx];
         game.move(move);
         board.position(game.fen());
 
         engine.postMessage("position fen " + game.fen());
-        engine.postMessage("go depth 12"); // Depth 12 agar cepat untuk review massal
-
+        engine.postMessage("go depth 12");
         engine.onmessage = (e) => {
             if (e.data.includes("score cp")) {
-                const cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
+                let cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
                 let score = (game.turn() === 'b' ? cp : -cp) / 100;
-                
-                classifyMove(move, score);
-                currentReviewIndex++;
-                setTimeout(processNextMove, 100); 
+                updateLog(move, score);
+                currentIdx++;
+                setTimeout(runReview, 200);
             }
         };
     }
 
-    // 4. Klasifikasi ala Chess.com
-    function classifyMove(move, currentScore) {
-        let diff = Math.abs(currentScore - lastScore);
-        let label = "Good";
-        let badge = "best";
+    function updateLog(move, score) {
+        let diff = Math.abs(score - lastEval);
+        let label = "Good", cls = "best";
+        if (diff > 2.5) { label = "!! Brilliant"; cls = "brilliant"; }
+        else if (diff > 1.5) { label = "?? Blunder"; cls = "blunder"; }
+        else if (diff > 0.8) { label = "? Mistake"; cls = "mistake"; }
 
-        if (diff > 3.0) { label = "!! Brilliant"; badge = "brilliant"; }
-        else if (diff > 2.0) { label = "?? Blunder"; badge = "blunder"; }
-        else if (diff > 1.2) { label = "? Mistake"; badge = "mistake"; }
-        else if (diff > 0.6) { label = "?! Inaccuracy"; badge = "inaccuracy"; }
-        else if (currentReviewIndex < 4) { label = "Book"; badge = "book"; }
-
+        $('#analysisLog').append(`<div style="display:flex; justify-content:space-between">
+            <span>${currentIdx+1}. ${move}</span>
+            <span class="${cls}">${label} (${score})</span>
+        </div>`);
+        $('#evalScore').text(score);
+        lastEval = score;
         const log = document.getElementById('analysisLog');
-        log.innerHTML += `
-            <div class="move-row">
-                <span>${currentReviewIndex + 1}. ${move}</span>
-                <span class="${badge}">${label} (${currentScore})</span>
-            </div>`;
         log.scrollTop = log.scrollHeight;
-        document.getElementById('evalScore').innerText = currentScore;
-        lastScore = currentScore;
     }
 
-    function startSingleAnalysis() {
+    function analyzeSingle() {
         engine.postMessage("position fen " + game.fen());
-        engine.postMessage("go depth 15");
+        engine.postMessage("go depth 13");
         engine.onmessage = (e) => {
             if (e.data.includes("score cp")) {
-                const cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
-                document.getElementById('evalScore').innerText = (game.turn() === 'w' ? cp : -cp) / 100;
+                let cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
+                $('#evalScore').text((game.turn() === 'w' ? cp : -cp) / 100);
             }
         };
     }
-</script>
 
+    initBoard();
+</script>
 </body>
 </html>
