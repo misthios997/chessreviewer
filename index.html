@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Neo - Final</title>
+    <title>Chess Reviewer Neo - Fixed Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { --bg: #161512; --panel: #262421; --green: #81b64c; --light: #dee3e6; --dark: #8ca2ad; }
@@ -18,18 +18,17 @@
         .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; margin-top: 10px; }
         .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
         .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
-        .btn-main { width: 100%; background: #444; margin-top: 10px; padding: 16px; font-size: 16px; transition: 0.3s; }
-        .active-btn { background: var(--green) !important; box-shadow: 0 4px 0 #5d8437; }
+        .btn-main { width: 100%; background: var(--green); margin-top: 10px; padding: 16px; font-size: 16px; box-shadow: 0 4px 0 #5d8437; }
         #list { max-height: 120px; overflow-y: auto; background: #111; margin-bottom: 10px; border: 1px solid #444; }
-        .game-item { padding: 12px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; display: block; width: 100%; box-sizing: border-box; }
-        .selected { background: #2d4a1a !important; color: white !important; font-weight: bold; border-left: 5px solid var(--green); }
+        .game-item { padding: 12px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; display: block; width: 100%; }
+        .selected { background: #2d4a1a !important; color: white !important; }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
     <h1 id="load-pct" style="font-size: 60px; color: var(--green); margin: 0;">0%</h1>
-    <p id="load-status">Menganalisis...</p>
+    <p id="load-status">Memulai Analisis...</p>
 </div>
 
 <div id="chess-board"></div>
@@ -37,7 +36,7 @@
 <div class="ui-card">
     <div style="display:flex; gap:5px; margin-bottom: 10px;">
         <input type="text" id="userInp" placeholder="Username Chess.com" style="flex:1; padding:12px; background:#111; color:white; border:1px solid #444; border-radius:4px;">
-        <button class="btn" style="background:#555;" onclick="loadGames()">CARI</button>
+        <button class="btn" style="background:#444;" onclick="loadGames()">CARI</button>
     </div>
     <div id="list"></div>
     
@@ -45,27 +44,21 @@
         <button class="btn btn-nav" onclick="go(-1)">❮</button>
         <button class="btn btn-nav" onclick="go(1)">❯</button>
     </div>
-    <button class="btn btn-main" id="btnAnalisis" onclick="startAnalysis()">ANALISIS GAME TERPILIH</button>
+    <button class="btn btn-main" onclick="startAnalysis()">ANALISIS GAME TERPILIH</button>
 
     <div id="status" style="margin-top:15px; padding:12px; background:#000; border-left:5px solid #444; display:flex; justify-content:space-between; align-items:center;">
         <div>
             <div id="moveDisplay" style="font-weight:bold;">Langkah --</div>
-            <div id="labelDisplay" style="font-size:12px; font-weight:bold; color:#ff4444;">PILIH GAME</div>
+            <div id="labelDisplay" style="font-size:12px; font-weight:bold;">READY</div>
         </div>
         <div id="scoreDisplay" style="font-size:24px; font-weight:bold; color:var(--green);">0.0</div>
     </div>
 </div>
 
 <script>
-    let engine;
-    try {
-        engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
-    } catch(e) {
-        console.log("Engine Worker Error");
-    }
-
-    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [];
-    window.currentPgn = "";
+    // Versi Stockfish ASM.js (Tanpa Worker untuk kompatibilitas HP maksimal)
+    let engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "";
 
     function drawBoard() {
         const b = document.getElementById('chess-board'); b.innerHTML = '';
@@ -108,14 +101,10 @@
                 item.className = 'game-item';
                 const opp = g.white.username.toLowerCase() === u.toLowerCase() ? g.black.username : g.white.username;
                 item.innerText = `vs ${opp} (${g.time_class})`;
-                
-                item.onclick = function() {
-                    window.currentPgn = g.pgn;
+                item.onclick = () => {
+                    selectedPgn = g.pgn;
                     document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
                     item.classList.add('selected');
-                    document.getElementById('btnAnalisis').classList.add('active-btn');
-                    document.getElementById('labelDisplay').innerText = "PGN SIAP";
-                    document.getElementById('labelDisplay').style.color = "#81b64c";
                 };
                 listDiv.appendChild(item);
             });
@@ -124,47 +113,52 @@
 
     function getEval(fen) {
         return new Promise((resolve) => {
-            if(!engine) return resolve(0.2);
-            const timeout = setTimeout(() => resolve(0.2), 1000); // Anti Stuck 0%
+            let found = false;
             engine.onmessage = (e) => {
                 if (e.data.includes("score cp")) {
-                    clearTimeout(timeout);
                     const match = e.data.match(/score cp (-?\d+)/);
-                    if (match) resolve(parseInt(match[1]) / 100);
+                    if (match && !found) {
+                        found = true;
+                        resolve(parseInt(match[1]) / 100);
+                    }
                 }
             };
             engine.postMessage("position fen " + fen);
-            engine.postMessage("go depth 8");
+            engine.postMessage("go depth 12"); // Depth lebih dalam biar akurat
         });
     }
 
     async function startAnalysis() {
-        if(!window.currentPgn) return alert("Klik nama lawan dulu!");
+        if(!selectedPgn) return alert("Pilih game dulu!");
         document.getElementById('loading-overlay').style.display = 'flex';
         
         let temp = new Chess();
-        temp.load_pgn(window.currentPgn);
+        temp.load_pgn(selectedPgn);
         gHistory = temp.history({verbose: true});
         temp.reset();
         analysisResults = [];
-        let lastScore = 0.2;
+        let lastScore = 0.3;
 
         for(let i=0; i < gHistory.length; i++) {
             temp.move(gHistory[i].san);
             document.getElementById('load-pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
             
-            const rawScore = await getEval(temp.fen());
-            const score = temp.turn() === 'b' ? rawScore : -rawScore;
+            // Tunggu engine berpikir (Min 300ms)
+            const scoreRaw = await getEval(temp.fen());
+            const score = temp.turn() === 'b' ? scoreRaw : -scoreRaw;
             const diff = score - lastScore;
 
             let res = { sym: '✓', color: '#81b64c', label: 'Good' };
-            if (diff < -1.5) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
-            else if (diff < -0.8) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
-            else if (diff > 0.5) res = { sym: '!', color: '#5c8bb0', label: 'Great' };
-            
+            if (diff < -1.4) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
+            else if (diff < -0.7) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
+            else if (diff > 0.5) res = { sym: '!!', color: '#15d0b1', label: 'Brilliant' };
+            else if (diff > 0.3) res = { sym: '!', color: '#5c8bb0', label: 'Great' };
+            else if (Math.abs(diff) < 0.1) res = { sym: '★', color: '#96bc4b', label: 'Best' };
+
             analysisResults.push({...res, score: score});
             lastScore = score;
         }
+
         game.reset(); gIdx = -1;
         document.getElementById('loading-overlay').style.display = 'none';
         drawBoard();
