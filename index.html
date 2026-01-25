@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Pro - Stockfish 16</title>
+    <title>Chess Reviewer Pro - Touch Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { --bg: #161512; --panel: #262421; --green: #81b64c; --light: #dee3e6; --dark: #8ca2ad; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; -webkit-tap-highlight-color: transparent; }
         #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 92vw; height: 92vw; max-width: 380px; border: 4px solid #333; }
         .square { display: flex; justify-content: center; align-items: center; position: relative; }
         .white { background-color: var(--light); }
@@ -18,17 +18,18 @@
         .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; margin-top: 10px; }
         .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
         .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
-        .btn-main { width: 100%; background: var(--green); margin-top: 10px; padding: 16px; font-size: 16px; box-shadow: 0 4px 0 #5d8437; }
-        #list { max-height: 120px; overflow-y: auto; background: #111; margin-bottom: 10px; border: 1px solid #444; }
-        .game-item { padding: 15px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; }
-        .selected { background: #2d4a1a !important; color: white !important; border-left: 4px solid var(--green); }
+        .btn-main { width: 100%; background: #444; margin-top: 10px; padding: 16px; font-size: 16px; border-bottom: 4px solid #222; transition: 0.2s; }
+        .active-btn { background: var(--green) !important; border-bottom: 4px solid #5d8437 !important; }
+        #list { max-height: 150px; overflow-y: auto; background: #111; margin-bottom: 10px; border: 1px solid #444; border-radius: 4px; }
+        .game-item { padding: 16px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; touch-action: manipulation; }
+        .selected { background: #2d4a1a !important; color: white !important; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
     <h1 id="load-pct" style="font-size: 60px; color: var(--green); margin: 0;">0%</h1>
-    <p id="load-msg">Memuat Mesin Stockfish 16...</p>
+    <p id="load-msg">Menganalisis...</p>
 </div>
 
 <div id="chess-board"></div>
@@ -36,25 +37,33 @@
 <div class="ui-card">
     <div style="display:flex; gap:5px; margin-bottom: 10px;">
         <input type="text" id="userInp" placeholder="Username Chess.com" style="flex:1; padding:12px; background:#111; color:white; border:1px solid #444; border-radius:4px;">
-        <button class="btn" style="background:#444;" onclick="loadGames()">CARI</button>
+        <button class="btn" style="background:#555;" onclick="loadGames()">CARI</button>
     </div>
-    <div id="list"></div>
-    <div style="display:flex; gap:10px;"><button class="btn btn-nav" onclick="go(-1)">❮</button><button class="btn btn-nav" onclick="go(1)">❯</button></div>
-    <button class="btn btn-main" onclick="startAnalysis()">ANALISIS FULL AKURASI</button>
     
+    <div id="list" onclick="handleListClick(event)">
+        <div style="padding:20px; color:#666; text-align:center; font-size:14px;">Masukkan username & klik cari</div>
+    </div>
+    
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-nav" onclick="go(-1)">❮</button>
+        <button class="btn btn-nav" onclick="go(1)">❯</button>
+    </div>
+    
+    <button class="btn btn-main" id="btnAnalisis" onclick="startAnalysis()">ANALISIS GAME TERPILIH</button>
+
     <div id="status" style="margin-top:15px; padding:12px; background:#000; border-left:5px solid #444; display:flex; justify-content:space-between; align-items:center;">
         <div>
             <div id="moveDisplay" style="font-weight:bold;">Langkah --</div>
-            <div id="labelDisplay" style="font-size:12px; font-weight:bold;">SIAP</div>
+            <div id="labelDisplay" style="font-size:12px; font-weight:bold; color:#ff4444;">PILIH GAME DULU</div>
         </div>
         <div id="scoreDisplay" style="font-size:24px; font-weight:bold; color:var(--green);">0.0</div>
     </div>
 </div>
 
 <script>
-    // Menggunakan Stockfish 16 Worker
     const engine = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js');
-    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "";
+    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [];
+    window.finalPgnData = ""; 
 
     function drawBoard() {
         const b = document.getElementById('chess-board'); b.innerHTML = '';
@@ -86,49 +95,64 @@
     async function loadGames() {
         const u = document.getElementById('userInp').value;
         const listDiv = document.getElementById('list');
-        listDiv.innerHTML = "<div style='padding:10px;'>Memuat...</div>";
+        if(!u) return;
+        listDiv.innerHTML = "<div style='padding:20px;'>Mencari di Chess.com...</div>";
         try {
             const res = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`);
             const data = await res.json();
             const last = await (await fetch(data.archives[data.archives.length-1])).json();
             listDiv.innerHTML = "";
-            last.games.reverse().slice(0,10).forEach(g => {
+            last.games.reverse().slice(0,10).forEach((g, index) => {
+                const opp = g.white.username.toLowerCase() === u.toLowerCase() ? g.black.username : g.white.username;
                 const item = document.createElement('div');
                 item.className = 'game-item';
-                const opp = g.white.username.toLowerCase() === u.toLowerCase() ? g.black.username : g.white.username;
+                item.dataset.pgn = g.pgn; // Simpan PGN di elemen
                 item.innerText = `vs ${opp} (${g.time_class})`;
-                item.onclick = () => {
-                    selectedPgn = g.pgn;
-                    document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
-                    item.classList.add('selected');
-                };
                 listDiv.appendChild(item);
             });
-        } catch(e) { listDiv.innerHTML = "Gagal Ambil Data."; }
+        } catch(e) { listDiv.innerHTML = "<div style='padding:20px;'>User tidak ditemukan.</div>"; }
     }
 
-    function analyzePosition(fen) {
+    // PENANGGULANGAN BUG KLIK MOBILE
+    function handleListClick(e) {
+        const target = e.target.closest('.game-item');
+        if (!target) return;
+
+        // Ambil data PGN
+        window.finalPgnData = target.dataset.pgn;
+
+        // Visual feedback
+        document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
+        target.classList.add('selected');
+        
+        const btn = document.getElementById('btnAnalisis');
+        btn.classList.add('active-btn');
+        
+        document.getElementById('labelDisplay').innerText = "PGN TERKUNCI";
+        document.getElementById('labelDisplay').style.color = "#81b64c";
+        
+        if (window.navigator.vibrate) window.navigator.vibrate(50); // Getar singkat
+    }
+
+    function getEval(fen) {
         return new Promise((resolve) => {
             engine.onmessage = (e) => {
                 if (e.data.includes("score cp")) {
                     const match = e.data.match(/score cp (-?\d+)/);
                     if (match) resolve(parseInt(match[1]) / 100);
-                } else if (e.data.includes("score mate")) {
-                    const match = e.data.match(/score mate (-?\d+)/);
-                    resolve(match && parseInt(match[1]) > 0 ? 99 : -99);
                 }
             };
             engine.postMessage("position fen " + fen);
-            engine.postMessage("go movetime 1500"); // Beri waktu 1.5 detik per langkah agar akurat
+            engine.postMessage("go movetime 1000"); // 1 detik per langkah agar akurat
         });
     }
 
     async function startAnalysis() {
-        if(!selectedPgn) return alert("Pilih game dulu!");
+        if(!window.finalPgnData) return alert("Sentuh nama lawan di daftar dulu!");
         document.getElementById('loading-overlay').style.display = 'flex';
         
         let temp = new Chess();
-        temp.load_pgn(selectedPgn);
+        temp.load_pgn(window.finalPgnData);
         gHistory = temp.history({verbose: true});
         temp.reset();
         analysisResults = [];
@@ -137,20 +161,16 @@
         for(let i=0; i < gHistory.length; i++) {
             temp.move(gHistory[i].san);
             document.getElementById('load-pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
-            document.getElementById('load-msg').innerText = `Menganalisis langkah ${i+1}/${gHistory.length}...`;
-
-            const rawEval = await analyzePosition(temp.fen());
-            const score = temp.turn() === 'b' ? rawEval : -rawEval;
+            
+            const raw = await getEval(temp.fen());
+            const score = temp.turn() === 'b' ? raw : -raw;
             const diff = score - lastScore;
 
-            // Logika Penilaian Akurat Chess.com
             let res = { sym: '✓', color: '#81b64c', label: 'Good' };
-            if (diff < -1.6) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
+            if (diff < -1.5) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
             else if (diff < -0.8) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
-            else if (diff < -0.4) res = { sym: '?!', color: '#a88865', label: 'Inaccuracy' };
-            else if (diff > 1.2) res = { sym: '!!', color: '#15d0b1', label: 'Brilliant' };
-            else if (diff > 0.4) res = { sym: '!', color: '#5c8bb0', label: 'Great Move' };
-            else if (Math.abs(diff) < 0.15) res = { sym: '★', color: '#96bc4b', label: 'Best Move' };
+            else if (diff > 0.5) res = { sym: '!', color: '#5c8bb0', label: 'Great' };
+            else if (Math.abs(diff) < 0.1) res = { sym: '★', color: '#96bc4b', label: 'Best' };
 
             analysisResults.push({...res, score: score});
             lastScore = score;
