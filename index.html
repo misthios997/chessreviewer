@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Neo - Final Stability</title>
+    <title>Chess Reviewer Neo - Engine Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { --bg: #161512; --panel: #262421; --green: #81b64c; --light: #dee3e6; --dark: #8ca2ad; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
-        #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 92vw; height: 92vw; max-width: 380px; border: 4px solid #333; background: #222; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 92vw; height: 92vw; max-width: 380px; border: 4px solid #333; }
         .square { display: flex; justify-content: center; align-items: center; position: relative; }
         .white { background-color: var(--light); }
         .black { background-color: var(--dark); }
         .piece { width: 90%; height: 90%; z-index: 10; pointer-events: none; }
         .eval-icon { position: absolute; top: -5%; right: -5%; width: 45%; height: 45%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; border: 1.5px solid #fff; }
-        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; margin-top: 10px; position: relative; z-index: 50; }
+        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; margin-top: 10px; }
         .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
         .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
-        .btn-main { width: 100%; background: #444; margin-top: 10px; padding: 16px; font-size: 16px; border-bottom: 4px solid #222; }
-        .ready-to-analyze { background: var(--green) !important; border-bottom: 4px solid #5d8437 !important; }
-        #list { max-height: 120px; overflow-y: auto; background: #111; margin-bottom: 10px; border: 1px solid #444; -webkit-overflow-scrolling: touch; }
-        .game-item { padding: 15px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; display: block; width: 100%; position: relative; z-index: 60; }
-        .selected { background: #2d4a1a !important; color: white !important; font-weight: bold; }
+        .btn-main { width: 100%; background: var(--green); margin-top: 10px; padding: 16px; font-size: 16px; box-shadow: 0 4px 0 #5d8437; }
+        #list { max-height: 120px; overflow-y: auto; background: #111; margin-bottom: 10px; border: 1px solid #444; }
+        .game-item { padding: 12px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; }
+        .selected { background: #2d4a1a !important; color: white !important; }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
     <h1 id="load-pct" style="font-size: 60px; color: var(--green); margin: 0;">0%</h1>
-    <p>Menganalisis...</p>
+    <p id="load-status">Menghubungkan Engine...</p>
 </div>
 
 <div id="chess-board"></div>
@@ -37,33 +36,29 @@
 <div class="ui-card">
     <div style="display:flex; gap:5px; margin-bottom: 10px;">
         <input type="text" id="userInp" placeholder="Username Chess.com" style="flex:1; padding:12px; background:#111; color:white; border:1px solid #444; border-radius:4px;">
-        <button class="btn" style="background:#555;" onclick="loadGames()">CARI</button>
+        <button class="btn" style="background:#444;" onclick="loadGames()">CARI</button>
     </div>
-    
-    <div id="list">
-        <div style="padding:15px; color:#666; font-size:12px; text-align:center;">Cari user lalu klik nama lawan</div>
-    </div>
+    <div id="list"></div>
     
     <div style="display:flex; gap:10px;">
         <button class="btn btn-nav" onclick="go(-1)">❮</button>
         <button class="btn btn-nav" onclick="go(1)">❯</button>
     </div>
-    
-    <button class="btn btn-main" id="btnAnalisis" onclick="startAnalysis()">ANALISIS GAME TERPILIH</button>
+    <button class="btn btn-main" onclick="startAnalysis()">ANALISIS GAME TERPILIH</button>
 
     <div id="status" style="margin-top:15px; padding:12px; background:#000; border-left:5px solid #444; display:flex; justify-content:space-between; align-items:center;">
         <div>
             <div id="moveDisplay" style="font-weight:bold;">Langkah --</div>
-            <div id="labelDisplay" style="font-size:12px; font-weight:bold; color:#ff4444;">PILIH GAME</div>
+            <div id="labelDisplay" style="font-size:12px; font-weight:bold;">READY</div>
         </div>
         <div id="scoreDisplay" style="font-size:24px; font-weight:bold; color:var(--green);">0.0</div>
     </div>
 </div>
 
 <script>
-    const engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
-    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [];
-    window.finalPgn = ""; // Variabel global agar tidak hilang
+    // Menggunakan Stockfish yang lebih kompatibel dengan Mobile
+    let engine = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js');
+    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "";
 
     function drawBoard() {
         const b = document.getElementById('chess-board'); b.innerHTML = '';
@@ -95,8 +90,7 @@
     async function loadGames() {
         const u = document.getElementById('userInp').value;
         const listDiv = document.getElementById('list');
-        if(!u) return;
-        listDiv.innerHTML = "<div style='padding:15px;'>Mencari...</div>";
+        listDiv.innerHTML = "<div style='padding:10px;'>Memuat...</div>";
         try {
             const res = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`);
             const data = await res.json();
@@ -107,66 +101,63 @@
                 item.className = 'game-item';
                 const opp = g.white.username.toLowerCase() === u.toLowerCase() ? g.black.username : g.white.username;
                 item.innerText = `vs ${opp} (${g.time_class})`;
-                
-                // FORCE CLICK
-                item.addEventListener('touchstart', () => {}, {passive: true}); // Fix mobile touch
-                item.onclick = function(e) {
-                    e.preventDefault();
-                    window.finalPgn = g.pgn;
+                item.onclick = () => {
+                    selectedPgn = g.pgn;
                     document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
                     item.classList.add('selected');
-                    
-                    const btn = document.getElementById('btnAnalisis');
-                    btn.classList.add('ready-to-analyze');
-                    document.getElementById('labelDisplay').innerText = "PGN TERKUNCI";
-                    document.getElementById('labelDisplay').style.color = "#81b64c";
-                    alert("Game vs " + opp + " sudah terpilih! Silakan tekan tombol Analisis.");
                 };
                 listDiv.appendChild(item);
             });
-        } catch(e) { listDiv.innerHTML = "<div style='padding:10px;'>Gagal ambil data.</div>"; }
+        } catch(e) { listDiv.innerHTML = "Gagal Ambil Data."; }
+    }
+
+    function getEval(fen) {
+        return new Promise((resolve) => {
+            engine.onmessage = (e) => {
+                if (e.data.includes("score cp")) {
+                    const match = e.data.match(/score cp (-?\d+)/);
+                    if (match) resolve(parseInt(match[1]) / 100);
+                } else if (e.data.includes("score mate")) {
+                    resolve(9.9);
+                }
+            };
+            engine.postMessage("position fen " + fen);
+            engine.postMessage("go depth 10");
+        });
     }
 
     async function startAnalysis() {
-        if(!window.finalPgn) return alert("Pilih game dulu dari daftar di atas!");
-        
+        if(!selectedPgn) return alert("Pilih game dulu!");
         document.getElementById('loading-overlay').style.display = 'flex';
+        
         let temp = new Chess();
-        if(!temp.load_pgn(window.finalPgn)) {
-            document.getElementById('loading-overlay').style.display = 'none';
-            return alert("PGN Tidak Valid!");
-        }
-
+        temp.load_pgn(selectedPgn);
         gHistory = temp.history({verbose: true});
         temp.reset();
         analysisResults = [];
-        let lastScore = 0.2;
+        let lastEval = 0.3;
 
         for(let i=0; i < gHistory.length; i++) {
-            temp.move(gHistory[i].san);
+            const move = gHistory[i];
+            temp.move(move.san);
+            
             document.getElementById('load-pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
-            
-            let score = await new Promise(resolve => {
-                engine.postMessage("position fen " + temp.fen());
-                engine.postMessage("go depth 10");
-                engine.onmessage = (e) => {
-                    if(e.data.includes("score cp")) {
-                        const m = e.data.match(/score cp (-?\d+)/);
-                        if(m) resolve((temp.turn() === 'b' ? parseInt(m[1]) : -parseInt(m[1])) / 100);
-                    }
-                };
-                setTimeout(() => resolve(lastScore), 700);
-            });
+            document.getElementById('load-status').innerText = `Menganalisis langkah ${i+1}...`;
 
-            let diff = score - lastScore;
+            const currentEval = await getEval(temp.fen());
+            const score = temp.turn() === 'b' ? currentEval : -currentEval;
+            const diff = score - lastEval;
+
             let res = { sym: '✓', color: '#81b64c', label: 'Good' };
-            if(diff < -1.5) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
-            else if(diff < -0.8) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
-            else if(diff > 0.4) res = { sym: '!', color: '#5c8bb0', label: 'Great' };
-            
+            if (diff < -1.5) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
+            else if (diff < -0.8) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
+            else if (diff > 0.6) res = { sym: '!', color: '#5c8bb0', label: 'Great' };
+            else if (Math.abs(diff) < 0.1) res = { sym: '★', color: '#96bc4b', label: 'Best' };
+
             analysisResults.push({...res, score: score});
-            lastScore = score;
+            lastEval = score;
         }
+
         game.reset(); gIdx = -1;
         document.getElementById('loading-overlay').style.display = 'none';
         drawBoard();
