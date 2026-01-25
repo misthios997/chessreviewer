@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer - Cloud Edition</title>
+    <title>Chess Reviewer Pro - Stockfish 16</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { --bg: #161512; --panel: #262421; --green: #81b64c; --light: #dee3e6; --dark: #8ca2ad; }
@@ -14,21 +14,21 @@
         .black { background-color: var(--dark); }
         .piece { width: 90%; height: 90%; z-index: 10; pointer-events: none; }
         .eval-icon { position: absolute; top: -5%; right: -5%; width: 45%; height: 45%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; border: 1.5px solid #fff; }
-        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; margin-top: 10px; }
         .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
         .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
         .btn-main { width: 100%; background: var(--green); margin-top: 10px; padding: 16px; font-size: 16px; box-shadow: 0 4px 0 #5d8437; }
         #list { max-height: 120px; overflow-y: auto; background: #111; margin-bottom: 10px; border: 1px solid #444; }
         .game-item { padding: 15px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; }
-        .selected { background: #2d4a1a !important; color: white !important; }
+        .selected { background: #2d4a1a !important; color: white !important; border-left: 4px solid var(--green); }
     </style>
 </head>
 <body>
 
 <div id="loading-overlay">
     <h1 id="load-pct" style="font-size: 60px; color: var(--green); margin: 0;">0%</h1>
-    <p>Dianalisis oleh Cloud Server...</p>
+    <p id="load-msg">Memuat Mesin Stockfish 16...</p>
 </div>
 
 <div id="chess-board"></div>
@@ -40,14 +40,20 @@
     </div>
     <div id="list"></div>
     <div style="display:flex; gap:10px;"><button class="btn btn-nav" onclick="go(-1)">❮</button><button class="btn btn-nav" onclick="go(1)">❯</button></div>
-    <button class="btn btn-main" onclick="startAnalysis()">ANALISIS INSTAN (CLOUD)</button>
-    <div id="status" style="margin-top:15px; padding:12px; background:#000; display:flex; justify-content:space-between; align-items:center;">
-        <div><div id="moveDisplay" style="font-weight:bold;">Langkah --</div><div id="labelDisplay" style="font-size:12px; font-weight:bold;">READY</div></div>
+    <button class="btn btn-main" onclick="startAnalysis()">ANALISIS FULL AKURASI</button>
+    
+    <div id="status" style="margin-top:15px; padding:12px; background:#000; border-left:5px solid #444; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <div id="moveDisplay" style="font-weight:bold;">Langkah --</div>
+            <div id="labelDisplay" style="font-size:12px; font-weight:bold;">SIAP</div>
+        </div>
         <div id="scoreDisplay" style="font-size:24px; font-weight:bold; color:var(--green);">0.0</div>
     </div>
 </div>
 
 <script>
+    // Menggunakan Stockfish 16 Worker
+    const engine = new Worker('https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js');
     let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "";
 
     function drawBoard() {
@@ -101,6 +107,22 @@
         } catch(e) { listDiv.innerHTML = "Gagal Ambil Data."; }
     }
 
+    function analyzePosition(fen) {
+        return new Promise((resolve) => {
+            engine.onmessage = (e) => {
+                if (e.data.includes("score cp")) {
+                    const match = e.data.match(/score cp (-?\d+)/);
+                    if (match) resolve(parseInt(match[1]) / 100);
+                } else if (e.data.includes("score mate")) {
+                    const match = e.data.match(/score mate (-?\d+)/);
+                    resolve(match && parseInt(match[1]) > 0 ? 99 : -99);
+                }
+            };
+            engine.postMessage("position fen " + fen);
+            engine.postMessage("go movetime 1500"); // Beri waktu 1.5 detik per langkah agar akurat
+        });
+    }
+
     async function startAnalysis() {
         if(!selectedPgn) return alert("Pilih game dulu!");
         document.getElementById('loading-overlay').style.display = 'flex';
@@ -115,23 +137,20 @@
         for(let i=0; i < gHistory.length; i++) {
             temp.move(gHistory[i].san);
             document.getElementById('load-pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
-            
-            // AMBIL DATA DARI CLOUD LICHESS (INSTAN & AKURAT)
-            let score = lastScore;
-            try {
-                const cloud = await fetch(`https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(temp.fen())}`).then(r => r.json());
-                if(cloud.pvs && cloud.pvs[0]) {
-                    const cp = cloud.pvs[0].cp;
-                    score = (temp.turn() === 'b' ? cp : -cp) / 100;
-                }
-            } catch(e) { /* Gunakan skor terakhir jika tidak ada di database cloud */ }
+            document.getElementById('load-msg').innerText = `Menganalisis langkah ${i+1}/${gHistory.length}...`;
 
-            let diff = score - lastScore;
+            const rawEval = await analyzePosition(temp.fen());
+            const score = temp.turn() === 'b' ? rawEval : -rawEval;
+            const diff = score - lastScore;
+
+            // Logika Penilaian Akurat Chess.com
             let res = { sym: '✓', color: '#81b64c', label: 'Good' };
-            if (diff < -1.5) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
+            if (diff < -1.6) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
             else if (diff < -0.8) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
-            else if (diff > 0.5) res = { sym: '!!', color: '#15d0b1', label: 'Brilliant' };
-            else if (Math.abs(diff) < 0.15) res = { sym: '★', color: '#96bc4b', label: 'Best' };
+            else if (diff < -0.4) res = { sym: '?!', color: '#a88865', label: 'Inaccuracy' };
+            else if (diff > 1.2) res = { sym: '!!', color: '#15d0b1', label: 'Brilliant' };
+            else if (diff > 0.4) res = { sym: '!', color: '#5c8bb0', label: 'Great Move' };
+            else if (Math.abs(diff) < 0.15) res = { sym: '★', color: '#96bc4b', label: 'Best Move' };
 
             analysisResults.push({...res, score: score});
             lastScore = score;
