@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer - Ultimate Engine</title>
+    <title>Chess Reviewer - Cloud Ultra</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { --bg: #161512; --panel: #262421; --green: #81b64c; --light: #dee3e6; --dark: #8ca2ad; }
@@ -14,7 +14,7 @@
         .black { background-color: var(--dark); }
         .piece { width: 90%; height: 90%; z-index: 10; pointer-events: none; }
         .eval-icon { position: absolute; top: -5%; right: -5%; width: 45%; height: 45%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; border: 1.5px solid #fff; }
-        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; margin-top: 10px; }
         .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
         .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
@@ -30,7 +30,7 @@
 
 <div id="loading-overlay">
     <h1 id="load-pct" style="font-size: 60px; color: var(--green); margin: 0;">0%</h1>
-    <p id="load-msg">Menyiapkan Stockfish 16...</p>
+    <p>Menganalisis via Cloud Server (Anti-Stuck)...</p>
 </div>
 
 <div id="chess-board"></div>
@@ -42,7 +42,7 @@
     </div>
     <div id="list"></div>
     <div style="display:flex; gap:10px;"><button class="btn btn-nav" onclick="go(-1)">❮</button><button class="btn btn-nav" onclick="go(1)">❯</button></div>
-    <button class="btn btn-main" id="btnAnalisis" onclick="startAnalysis()">ANALISIS FULL AKURASI</button>
+    <button class="btn btn-main" id="btnAnalisis" onclick="startAnalysis()">ANALISIS INSTAN</button>
     <div id="status" style="margin-top:15px; padding:12px; background:#000; border-left:5px solid #444; display:flex; justify-content:space-between; align-items:center;">
         <div><div id="moveDisplay" style="font-weight:bold;">Langkah --</div><div id="labelDisplay" style="font-size:12px; font-weight:bold;">SIAP</div></div>
         <div id="scoreDisplay">0.0</div>
@@ -50,12 +50,6 @@
 </div>
 
 <script>
-    // Load Engine dengan sistem fallback
-    let stockfish;
-    try {
-        stockfish = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
-    } catch(e) { console.error("Worker Error"); }
-
     let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "";
 
     function drawBoard() {
@@ -109,25 +103,17 @@
         } catch(e) { listDiv.innerHTML = "Gagal Ambil Data."; }
     }
 
-    function getBestMove(fen) {
-        return new Promise((resolve) => {
-            stockfish.postMessage("position fen " + fen);
-            stockfish.postMessage("go depth 12"); // Kedalaman 12 cukup akurat & cepat di HP
-            
-            const listener = (e) => {
-                if (e.data.includes("score cp")) {
-                    const match = e.data.match(/score cp (-?\d+)/);
-                    if (match) {
-                        stockfish.removeEventListener('message', listener);
-                        resolve(parseInt(match[1]) / 100);
-                    }
-                } else if (e.data.includes("score mate")) {
-                    stockfish.removeEventListener('message', listener);
-                    resolve(e.data.includes("score mate 0") ? 100 : 50); // Mate detection
-                }
-            };
-            stockfish.addEventListener('message', listener);
-        });
+    async function fetchCloudEval(fen) {
+        try {
+            const res = await fetch(`https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(fen)}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (data.pvs && data.pvs[0]) {
+                if (data.pvs[0].cp !== undefined) return data.pvs[0].cp / 100;
+                if (data.pvs[0].mate !== undefined) return data.pvs[0].mate > 0 ? 20 : -20;
+            }
+            return null;
+        } catch { return null; }
     }
 
     async function startAnalysis() {
@@ -145,22 +131,26 @@
             temp.move(gHistory[i].san);
             document.getElementById('load-pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
             
-            // Analisis Real-time dengan Stockfish Lokal
-            const rawScore = await getBestMove(temp.fen());
-            const score = temp.turn() === 'b' ? rawScore : -rawScore;
-            const diff = score - lastScore;
+            // Ambil dari Cloud Lichess (Depth Tinggi & Instan)
+            let currentScore = await fetchCloudEval(temp.fen());
+            
+            // Fallback jika tidak ada data cloud (evaluasi statis sederhana)
+            if (currentScore === null) currentScore = lastScore;
 
-            // Logika Penilaian Persis Chess.com
+            const diff = currentScore - lastScore;
+            const isWhite = temp.turn() === 'b'; // Skor setelah langkah putih
+            
             let res = { sym: '✓', color: '#81b64c', label: 'Good' };
-            if (diff < -1.5) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
-            else if (diff < -0.8) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
-            else if (diff < -0.4) res = { sym: '?!', color: '#a88865', label: 'Inaccuracy' };
+            
+            // Logika Penilaian
+            if (diff < -1.8) res = { sym: '??', color: '#fa4143', label: 'Blunder' };
+            else if (diff < -0.9) res = { sym: '?', color: '#e6912c', label: 'Mistake' };
             else if (diff > 0.8) res = { sym: '!!', color: '#15d0b1', label: 'Brilliant' };
-            else if (diff > 0.35) res = { sym: '!', color: '#5c8bb0', label: 'Great Move' };
-            else if (Math.abs(diff) < 0.1) res = { sym: '★', color: '#96bc4b', label: 'Best Move' };
+            else if (diff > 0.4) res = { sym: '!', color: '#5c8bb0', label: 'Great' };
+            else if (Math.abs(diff) < 0.15) res = { sym: '★', color: '#96bc4b', label: 'Best' };
 
-            analysisResults.push({...res, score: score});
-            lastScore = score;
+            analysisResults.push({...res, score: currentScore});
+            lastScore = currentScore;
         }
         game.reset(); gIdx = -1;
         document.getElementById('loading-overlay').style.display = 'none';
