@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Pro - Ultra Fix</title>
+    <title>Chess Reviewer Sakti</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
     
@@ -11,65 +11,63 @@
         :root { 
             --bg: #1a1917; --panel: #262421; --green: #81b64c; 
             --brilliant: #15d0b1; --great: #5c8bb0; --best: #96bc4b; 
-            --good: #96bc4b; --inaccuracy: #f0c15c; --mistake: #e58f2a; 
-            --miss: #ff6b6b; --blunder: #fa4143; 
+            --inaccuracy: #f0c15c; --mistake: #e58f2a; --blunder: #fa4143; 
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        /* Coach Area */
+        /* Box Coach */
         .header-box { width: 100%; max-width: 400px; background: var(--panel); border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 4px solid #3d3a37; box-sizing: border-box; }
-        .coach-icon { font-size: 30px; background: #333; padding: 8px; border-radius: 50%; }
         
-        /* Board Area */
-        #board-resizer { width: 100%; max-width: 400px; margin-bottom: 15px; position: relative; background: #444; border: 2px solid #555; border-radius: 4px; overflow: hidden; }
-        #board { width: 100% !important; height: auto; }
+        /* BOARD FIX: Tinggi minimal agar tidak gepeng/hilang */
+        #board-wrapper { width: 100%; max-width: 400px; margin-bottom: 15px; background: #333; border: 3px solid #444; border-radius: 5px; min-height: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        #board { width: 100% !important; }
 
-        /* Controls */
         .main-panel { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; }
         
-        .nav-row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .btn-nav { flex: 1; padding: 15px; border: none; border-radius: 4px; background: #3d3a37; color: white; font-weight: bold; cursor: pointer; font-size: 20px; }
-        .btn-flip { background: #444; font-size: 14px; flex: 0.5; border: 1px solid #666; }
+        .nav-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-nav { flex: 1; padding: 18px; border: none; border-radius: 6px; background: #3d3a37; color: white; font-weight: bold; cursor: pointer; font-size: 22px; transition: 0.2s; }
+        .btn-nav:active { background: #555; transform: scale(0.95); }
+        .btn-flip { flex: 0.4; font-size: 14px; background: #444; }
 
-        .btn-start { width: 100%; padding: 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; background: var(--green); font-size: 16px; margin: 10px 0; }
+        .btn-start { width: 100%; padding: 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; background: var(--green); font-size: 18px; margin-bottom: 15px; box-shadow: 0 4px 0 #5d8437; }
+        .btn-start:active { transform: translateY(2px); box-shadow: 0 2px 0 #5d8437; }
         
-        input, textarea { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #121211; color: white; margin-bottom: 8px; box-sizing: border-box; }
-        .game-list { max-height: 80px; overflow-y: auto; font-size: 12px; color: var(--green); cursor: pointer; margin-bottom: 10px; border: 1px solid #333; padding: 5px; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #121211; color: white; margin-bottom: 10px; box-sizing: border-box; font-size: 14px; }
+        .game-item { padding: 10px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 13px; }
         
-        .info-bar { background: #121211; padding: 12px; border-radius: 4px; border-left: 5px solid #444; margin-top: 5px; }
-        .move-text { font-weight: bold; font-size: 16px; display: block; }
-        .label-text { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-top: 5px; display: block; }
+        .info-bar { background: #121211; padding: 15px; border-radius: 6px; border-left: 6px solid #444; }
+        .label-text { font-size: 16px; font-weight: bold; text-transform: uppercase; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div class="header-box">
-        <div class="coach-icon">👨‍🏫</div>
-        <div id="statusText" style="font-size: 13px;">Coach: Pastikan PGN sudah terisi, lalu klik <b>Start</b> dan tombol <b>Next (>)</b>.</div>
+        <span style="font-size: 30px;">👨‍🏫</span>
+        <div id="statusText" style="font-size: 13px;">Coach: Pastikan bidak muncul, lalu klik <b>Start Game Review</b>.</div>
     </div>
 
-    <div id="board-resizer">
+    <div id="board-wrapper">
         <div id="board"></div>
     </div>
 
     <div class="main-panel">
         <div class="nav-row">
-            <button class="btn-nav" onclick="prevMove()"> < </button>
+            <button class="btn-nav" onclick="movePrev()"> ❮ </button>
             <button class="btn-nav btn-flip" onclick="flipBoard()">🔄 Flip</button>
-            <button class="btn-nav" onclick="nextMove()"> > </button>
+            <button class="btn-nav" onclick="moveNext()"> ❯ </button>
         </div>
 
-        <input type="text" id="usernameInput" placeholder="Username Chess.com">
-        <button onclick="loadUserGames()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:4px; margin-bottom:10px; cursor:pointer;">Cari Game</button>
-        <div id="gameList" class="game-list"></div>
+        <input type="text" id="userInput" placeholder="Username Chess.com">
+        <button onclick="fetchGames()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:4px; margin-bottom:10px;">Cari Game Terbaru</button>
+        <div id="listGames" style="max-height: 100px; overflow-y: auto; margin-bottom: 10px;"></div>
 
-        <textarea id="pgnArea" placeholder="PGN akan otomatis terisi atau paste di sini..."></textarea>
+        <textarea id="pgnInput" placeholder="Atau paste PGN di sini..."></textarea>
         
-        <button class="btn-start" onclick="initReview()">START GAME REVIEW</button>
+        <button class="btn-start" onclick="startTheReview()">START GAME REVIEW</button>
         
-        <div class="info-bar" id="infoBar">
-            <span id="moveDisplay" class="move-text">Langkah: --</span>
-            <span id="labelText" class="label-text">SIAP ANALISIS</span>
+        <div class="info-bar" id="evalBox">
+            <span id="moveNum" style="color: #aaa;">Langkah: --</span>
+            <span id="labelReview" class="label-text">SIAP</span>
         </div>
     </div>
 
@@ -80,123 +78,126 @@
     <script>
         var board = null;
         var game = new Chess();
-        var engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
-        var moveHistory = [], currentIdx = -1, lastEval = 0.3, analysisCache = {};
+        var stockfish = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+        var historyMoves = [];
+        var currentMove = -1;
+        var prevEval = 0.3;
+        var cacheEval = {};
 
-        function init() {
-            var config = {
+        // INI KUNCI AGAR BIDAK MUNCUL (Bidak Lokal Chessboardjs)
+        function initBoard() {
+            var cfg = {
                 position: 'start',
                 draggable: false,
-                // MENGGUNAKAN TEMA LOKAL AGAR TIDAK HILANG
                 pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
             };
-            board = Chessboard('board', config);
-            $(window).resize(board.resize);
-            // Paksa resize setelah 1 detik agar papan tidak gepeng di mobile
-            setTimeout(board.resize, 1000);
+            board = Chessboard('board', cfg);
+            
+            // Fix agar papan tidak gepeng di mobile
+            setTimeout(function() { 
+                board.resize(); 
+                console.log("Board Resized");
+            }, 800);
         }
 
         function flipBoard() { board.flip(); }
 
-        async function loadUserGames() {
-            let user = $('#usernameInput').val();
-            if(!user) return;
-            $('#gameList').text("Mencari game...");
+        async function fetchGames() {
+            let u = $('#userInput').val();
+            if(!u) return alert("Isi username dulu!");
+            $('#listGames').html("Mencari...");
             try {
-                let r = await fetch(`https://api.chess.com/pub/player/${user}/games/2026/01`);
+                let r = await fetch(`https://api.chess.com/pub/player/${u}/games/2026/01`);
                 let d = await r.json();
-                $('#gameList').empty();
-                if(d.games) {
-                    d.games.reverse().slice(0, 5).forEach(g => {
-                        let opp = (g.white.username.toLowerCase() == user.toLowerCase() ? g.black.username : g.white.username);
-                        $(`<div style="padding:8px; border-bottom:1px solid #333;">vs ${opp}</div>`)
-                        .click(() => { 
-                            $('#pgnArea').val(g.pgn); 
-                            $('#statusText').text("PGN Terpilih! Klik START REVIEW."); 
-                        }).appendTo('#gameList');
-                    });
-                }
-            } catch(e) { $('#gameList').text("Gagal memuat game."); }
+                $('#listGames').empty();
+                d.games.reverse().slice(0, 5).forEach(g => {
+                    let opp = (g.white.username.toLowerCase() == u.toLowerCase() ? g.black.username : g.white.username);
+                    $(`<div class="game-item">vs ${opp} (${g.white.username == u ? 'Putih' : 'Hitam'})</div>`)
+                    .click(() => { $('#pgnInput').val(g.pgn); $('#statusText').text("PGN Dimuat! Klik START."); })
+                    .appendTo('#listGames');
+                });
+            } catch(e) { $('#listGames').html("Gagal ambil data."); }
         }
 
-        function initReview() {
-            let pgn = $('#pgnArea').val();
-            if (!pgn || !game.load_pgn(pgn)) {
-                alert("PGN Kosong atau Tidak Valid!");
-                return;
+        // FUNGSI START YANG DIPERBAIKI
+        function startTheReview() {
+            let pgn = $('#pgnInput').val();
+            if (!game.load_pgn(pgn)) {
+                return alert("PGN tidak valid atau kosong!");
             }
-            moveHistory = game.history();
+            historyMoves = game.history();
             game.reset();
             board.start();
-            currentIdx = -1;
-            lastEval = 0.3;
-            analysisCache = {};
-            $('#statusText').text("Review Siap! Gunakan tombol panah >.");
-            $('#moveDisplay').text("Langkah: 0");
-            $('#labelText').text("Mulai Review").css('color', 'white');
+            currentMove = -1;
+            prevEval = 0.3;
+            cacheEval = {};
+            
+            $('#statusText').text("Review Dimulai! Tekan tombol ❯.");
+            $('#labelReview').text("MULAI").css('color', 'white');
+            $('#moveNum').text("Langkah: 0");
         }
 
-        function nextMove() {
-            if (currentIdx < moveHistory.length - 1) {
-                currentIdx++;
-                let move = moveHistory[currentIdx];
-                game.move(move);
+        function moveNext() {
+            if (currentMove < historyMoves.length - 1) {
+                currentMove++;
+                let m = historyMoves[currentMove];
+                game.move(m);
                 board.position(game.fen());
-                analyzePos(move);
+                runAnalysis(m);
             }
         }
 
-        function prevMove() {
-            if (currentIdx >= 0) {
+        function movePrev() {
+            if (currentMove >= 0) {
                 game.undo();
-                currentIdx--;
+                currentMove--;
                 board.position(game.fen());
-                if (currentIdx >= 0) {
-                    showResult(moveHistory[currentIdx], analysisCache[currentIdx]);
+                if (currentMove >= 0) {
+                    displayUI(historyMoves[currentMove], cacheEval[currentMove]);
                 } else {
-                    $('#moveDisplay').text("Awal");
-                    $('#labelText').text("SIAP");
+                    $('#labelReview').text("AWAL");
                 }
             }
         }
 
-        function analyzePos(move) {
-            $('#statusText').text("Coach sedang menganalisis...");
-            engine.postMessage("position fen " + game.fen());
-            engine.postMessage("go depth 12");
+        function runAnalysis(moveStr) {
+            $('#statusText').text("Coach sedang berpikir...");
+            stockfish.postMessage("position fen " + game.fen());
+            stockfish.postMessage("go depth 12");
             
-            engine.onmessage = function(e) {
+            stockfish.onmessage = function(e) {
                 if (e.data.includes("score cp")) {
-                    let cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
-                    let score = (game.turn() === 'b' ? cp : -cp) / 100;
-                    analysisCache[currentIdx] = score;
-                    showResult(move, score);
+                    let match = e.data.match(/score cp (-?\d+)/);
+                    if(match) {
+                        let cp = parseInt(match[1]);
+                        let score = (game.turn() === 'b' ? cp : -cp) / 100;
+                        cacheEval[currentMove] = score;
+                        displayUI(moveStr, score);
+                    }
                 }
             };
         }
 
-        function showResult(move, score) {
-            let diff = score - lastEval;
+        function displayUI(move, score) {
+            let diff = score - prevEval;
             let absDiff = Math.abs(diff);
-            let label = "Good", color = "var(--good)";
+            let label = "Good", color = "var(--green)";
 
-            // SISTEM KLASIFIKASI
             if (absDiff < 0.2) { label = "Best Move ⭐"; color = "var(--best)"; }
-            else if (diff > 2.0) { label = "Brilliant !!"; color = "var(--brilliant)"; }
-            else if (diff > 1.0) { label = "Great !"; color = "var(--great)"; }
+            else if (diff > 1.8) { label = "Brilliant !!"; color = "var(--brilliant)"; }
+            else if (diff > 0.8) { label = "Great !"; color = "var(--great)"; }
             else if (diff < -2.0) { label = "Blunder ??"; color = "var(--blunder)"; }
-            else if (diff < -1.2) { label = "Mistake ?"; color = "var(--mistake)"; }
-            else if (diff < -0.8) { label = "Miss X"; color = "var(--miss)"; }
+            else if (diff < -1.1) { label = "Mistake ?"; color = "var(--mistake)"; }
             else if (diff < -0.5) { label = "Inaccuracy ?!"; color = "var(--inaccuracy)"; }
 
-            $('#moveDisplay').text((currentIdx + 1) + ". " + move);
-            $('#labelText').text(label).css('color', color);
-            $('#infoBar').css('border-left-color', color);
-            $('#statusText').text("Langkah: " + label).css('color', color);
-            lastEval = score;
+            $('#moveNum').text((currentMove + 1) + ". " + move);
+            $('#labelReview').text(label).css('color', color);
+            $('#evalBox').css('border-left-color', color);
+            $('#statusText').text("Langkah Terakhir: " + label).css('color', color);
+            prevEval = score;
         }
 
-        $(document).ready(init);
+        $(document).ready(initBoard);
     </script>
 </body>
 </html>
