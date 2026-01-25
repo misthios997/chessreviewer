@@ -3,54 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Pro Fix</title>
+    <title>Chess Reviewer Pro - Ultra Fix</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     
     <style>
         :root { 
             --bg: #1a1917; --panel: #262421; --green: #81b64c; 
-            --best: #96bc4b; --blunder: #fa4143; 
         }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        /* FIX: Kontainer papan harus punya ukuran jelas agar tidak 0px */
-        #board-container { width: 100%; max-width: 400px; aspect-ratio: 1/1; background: #333; margin-bottom: 15px; border: 2px solid #444; }
-        #board { width: 100% !important; }
+        /* FIX PAPAN HITAM: Beri tinggi & lebar yang pasti */
+        #board-wrapper { width: 100%; max-width: 380px; background: #444; margin-bottom: 15px; border: 4px solid #333; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #board { width: 100% !important; height: auto !important; }
 
-        .controls { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; }
-        .btn-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-main { background: var(--green); color: white; width: 100%; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; background: #121211; color: white; border: 1px solid #444; box-sizing: border-box; }
-        .status { background: #121211; padding: 10px; border-left: 4px solid var(--green); font-size: 14px; }
+        .main-panel { width: 100%; max-width: 380px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; }
+        .nav-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-nav { flex: 1; padding: 15px; border: none; border-radius: 5px; background: #3d3a37; color: white; font-weight: bold; font-size: 20px; }
+        .btn-flip { flex: 0.5; font-size: 14px; background: #444; }
+
+        .btn-start { width: 100%; padding: 15px; border: none; border-radius: 5px; font-weight: bold; color: white; background: var(--green); font-size: 16px; margin-bottom: 15px; cursor: pointer; }
+        
+        input, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #121211; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        
+        .status-box { background: #121211; padding: 12px; border-radius: 5px; border-left: 5px solid var(--green); }
     </style>
 </head>
 <body>
 
-    <h3 style="margin: 10px 0;">Chess Reviewer Pro</h3>
+    <h2 style="margin: 10px 0;">Chess Reviewer Pro</h2>
 
-    <div id="board-container">
+    <div id="board-wrapper">
         <div id="board"></div>
     </div>
 
-    <div class="controls">
-        <div class="btn-row">
-            <button onclick="goPrev()" style="background: #3d3a37; color: white; font-size: 20px;">❮</button>
-            <button onclick="board.flip()" style="background: #444; color: white;">🔄 Flip</button>
-            <button onclick="goNext()" style="background: #3d3a37; color: white; font-size: 20px;">❯</button>
+    <div class="main-panel">
+        <div class="nav-row">
+            <button class="btn-nav" onclick="prev()">❮</button>
+            <button class="btn-nav btn-flip" onclick="board.flip()">Flip</button>
+            <button class="btn-nav" onclick="next()">❯</button>
         </div>
 
-        <input type="text" id="username" placeholder="Username Chess.com">
-        <button onclick="getGames()" style="background: #444; color: white; width: 100%; margin-bottom: 10px;">Cari Game</button>
-        <div id="gameLinks" style="font-size: 12px; color: var(--green); margin-bottom: 10px;"></div>
+        <input type="text" id="userInput" placeholder="Username Chess.com">
+        <button onclick="cariGame()" style="width:100%; padding:10px; background:#444; color:white; border:none; margin-bottom:10px; border-radius:5px;">Cari Game</button>
+        <div id="gameList" style="font-size: 12px; color: #81b64c; margin-bottom: 10px;"></div>
 
-        <textarea id="pgnBox" rows="3" placeholder="Paste PGN di sini..."></textarea>
-        <button class="btn-main" onclick="startReview()">START GAME REVIEW</button>
-
-        <div class="status" id="statusLine">
-            <b id="moveLabel">Langkah: --</b><br>
-            <span id="evalLabel">Siap Analisis</span>
+        <textarea id="pgnInput" rows="4" placeholder="Paste PGN di sini..."></textarea>
+        
+        <button class="btn-start" onclick="jalankanReview()">START GAME REVIEW</button>
+        
+        <div class="status-box">
+            <div id="moveDisplay" style="font-weight: bold;">Langkah: --</div>
+            <div id="reviewText" style="font-size: 14px; margin-top: 5px; color: #aaa;">Siap Analisis</div>
         </div>
     </div>
 
@@ -61,71 +65,81 @@
     <script>
         var board = null;
         var game = new Chess();
-        var moveList = [];
-        var currentIdx = -1;
+        var moveHistory = [];
+        var currentMoveIdx = -1;
 
-        // Inisialisasi Papan
-        function init() {
+        // FUNGSI INIT PAPAN (DIPANGGIL SAAT PAGE LOAD)
+        function initPapan() {
             var config = {
                 position: 'start',
-                // FIX: Gunakan template gambar Wikipedia dari server terpercaya
+                draggable: false,
                 pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
             };
+            
             board = Chessboard('board', config);
             
-            // Paksa refresh ukuran agar muncul di HP
-            setTimeout(() => { board.resize(); }, 500);
+            // PAKSA PAPAN MUNCUL (RESIZE)
+            setTimeout(function() {
+                board.resize();
+                console.log("Board forced resize.");
+            }, 1000);
         }
 
-        async function getGames() {
-            let user = $('#username').val();
-            if(!user) return;
-            $('#gameLinks').text("Loading...");
+        async function cariGame() {
+            let u = $('#userInput').val();
+            if(!u) return;
+            $('#gameList').text("Mencari...");
             try {
-                let r = await fetch(`https://api.chess.com/pub/player/${user}/games/2026/01`);
+                let r = await fetch(`https://api.chess.com/pub/player/${u}/games/2026/01`);
                 let d = await r.json();
-                $('#gameLinks').empty();
+                $('#gameList').empty();
                 d.games.reverse().slice(0, 3).forEach((g, i) => {
-                    $(`<div style="cursor:pointer; padding:5px; border-bottom:1px solid #333;">Game ${i+1} (Klik untuk pilih)</div>`)
-                    .click(() => { $('#pgnBox').val(g.pgn); alert("PGN Terpilih!"); })
-                    .appendTo('#gameLinks');
+                    $(`<div style="padding:5px; border-bottom:1px solid #333; cursor:pointer;">Game ${i+1} (Klik untuk pilih)</div>`)
+                    .click(() => { $('#pgnInput').val(g.pgn); alert("PGN Dimuat!"); })
+                    .appendTo('#gameList');
                 });
-            } catch(e) { $('#gameLinks').text("Gagal ambil data."); }
+            } catch(e) { $('#gameList').text("Gagal ambil data."); }
         }
 
-        function startReview() {
-            let pgn = $('#pgnBox').val();
-            if (!game.load_pgn(pgn)) return alert("PGN Kosong atau Error!");
+        // FUNGSI START REVIEW (DIPERBAIKI)
+        function jalankanReview() {
+            let pgnTeks = $('#pgnInput').val();
+            if (!pgnTeks || !game.load_pgn(pgnTeks)) {
+                alert("PGN Error atau Kosong!");
+                return;
+            }
             
-            moveList = game.history();
+            moveHistory = game.history();
             game.reset();
             board.start();
-            currentIdx = -1;
-            $('#statusLine').show();
-            $('#evalLabel').text("Review Dimulai. Tekan panah ❯");
+            currentMoveIdx = -1;
+            
+            $('#moveDisplay').text("Langkah: 0");
+            $('#reviewText').text("Review dimulai! Gunakan tombol ❯");
+            console.log("Review started with " + moveHistory.length + " moves.");
         }
 
-        function goNext() {
-            if (currentIdx < moveList.length - 1) {
-                currentIdx++;
-                game.move(moveList[currentIdx]);
+        function next() {
+            if (currentMoveIdx < moveHistory.length - 1) {
+                currentMoveIdx++;
+                game.move(moveHistory[currentMoveIdx]);
                 board.position(game.fen());
-                $('#moveLabel').text("Langkah: " + (currentIdx + 1) + ". " + moveList[currentIdx]);
-                // Logika evaluasi sederhana untuk label
-                $('#evalLabel').text("Menganalisis langkah...");
+                $('#moveDisplay').text("Langkah: " + (currentMoveIdx + 1) + ". " + moveHistory[currentMoveIdx]);
+                $('#reviewText').text("Menganalisis...");
             }
         }
 
-        function goPrev() {
-            if (currentIdx >= 0) {
+        function prev() {
+            if (currentMoveIdx >= 0) {
                 game.undo();
-                currentIdx--;
+                currentMoveIdx--;
                 board.position(game.fen());
-                $('#moveLabel').text("Langkah: " + (currentIdx + 1));
+                $('#moveDisplay').text("Langkah: " + (currentMoveIdx + 1));
             }
         }
 
-        $(document).ready(init);
+        // JALANKAN SAAT SIAP
+        $(document).ready(initPapan);
     </script>
 </body>
 </html>
