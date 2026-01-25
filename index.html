@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Pro v2</title>
+    <title>Chess Reviewer Pro - Ultra Fix</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
     
@@ -16,33 +16,34 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
+        /* Header Coach */
         .header-box { width: 100%; max-width: 400px; background: var(--panel); border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 4px solid #3d3a37; box-sizing: border-box; }
         .coach-icon { font-size: 30px; background: #333; padding: 8px; border-radius: 50%; }
         
-        #board-resizer { width: 100%; max-width: 400px; margin-bottom: 10px; position: relative; }
-        #board { width: 100% !important; border-radius: 4px; border: 2px solid #444; }
+        /* Area Papan Catur - Diberi tinggi minimal agar tidak hilang */
+        #board-resizer { width: 100%; max-width: 400px; margin-bottom: 10px; min-height: 300px; background: #000; }
+        #board { width: 100% !important; border: 2px solid #444; border-radius: 4px; }
 
         .main-panel { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; box-sizing: border-box; }
         
         .nav-row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .btn-nav { flex: 1; padding: 12px; border: none; border-radius: 4px; background: #3d3a37; color: white; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .btn-nav { flex: 1; padding: 15px; border: none; border-radius: 4px; background: #3d3a37; color: white; font-weight: bold; cursor: pointer; font-size: 20px; }
         .btn-flip { background: #444; font-size: 14px; flex: 0.5; }
 
         .btn-start { width: 100%; padding: 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; background: var(--green); font-size: 16px; margin-bottom: 10px; }
         
-        .info-bar { background: #121211; padding: 12px; border-radius: 4px; margin-top: 5px; border-left: 4px solid #444; }
-        .move-text { font-weight: bold; font-size: 16px; display: block; margin-bottom: 4px; }
-        .label-text { font-size: 14px; font-weight: bold; text-transform: uppercase; }
-
         input, textarea { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #121211; color: white; margin-bottom: 10px; box-sizing: border-box; }
-        .game-list { max-height: 80px; overflow-y: auto; font-size: 12px; color: var(--green); cursor: pointer; margin-bottom: 10px; }
+        
+        .info-bar { background: #121211; padding: 12px; border-radius: 4px; border-left: 5px solid #444; }
+        .move-text { font-weight: bold; font-size: 16px; display: block; }
+        .label-text { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-top: 5px; display: block; }
     </style>
 </head>
 <body>
 
     <div class="header-box">
         <div class="coach-icon">👨‍🏫</div>
-        <div id="statusText" style="font-size: 13px;">Coach: Klik <b>Start</b> lalu <b>Next</b> untuk klasifikasi langkah.</div>
+        <div id="statusText" style="font-size: 13px;">Coach: Klik <b>Start</b> lalu <b>Next (>)</b> untuk review.</div>
     </div>
 
     <div id="board-resizer">
@@ -51,21 +52,21 @@
 
     <div class="main-panel">
         <div class="nav-row">
-            <button class="btn-nav" onclick="prevMove()"> &lt; </button>
+            <button class="btn-nav" onclick="prevMove()"> < </button>
             <button class="btn-nav btn-flip" onclick="flipBoard()">🔄 Flip</button>
-            <button class="btn-nav" onclick="nextMove()"> &gt; </button>
+            <button class="btn-nav" onclick="nextMove()"> > </button>
         </div>
 
-        <input type="text" id="usernameInput" placeholder="Chess.com Username">
-        <button onclick="loadUserGames()" style="width:100%; padding:8px; background:#444; color:white; border:none; margin-bottom:10px; border-radius:4px;">Cari Game Terbaru</button>
-        <div id="gameList" class="game-list"></div>
+        <input type="text" id="usernameInput" placeholder="Username Chess.com">
+        <button onclick="loadUserGames()" style="width:100%; padding:10px; background:#444; color:white; border:none; border-radius:4px; margin-bottom:10px;">Cari Game</button>
+        <div id="gameList" style="max-height: 80px; overflow-y: auto; margin-bottom: 10px; font-size: 12px; color: #81b64c;"></div>
 
         <textarea id="pgnArea" placeholder="Paste PGN di sini..."></textarea>
         <button class="btn-start" onclick="initReview()">START GAME REVIEW</button>
         
         <div class="info-bar" id="infoBar">
-            <span class="move-text" id="moveDisplay">Langkah: --</span>
-            <span class="label-text" id="labelText">SIAP ANALISIS</span>
+            <span id="moveDisplay" class="move-text">Langkah: --</span>
+            <span id="labelText" class="label-text">SIAP ANALISIS</span>
         </div>
     </div>
 
@@ -74,14 +75,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 
     <script>
-        var board, game = new Chess(), engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
-        var moveHistory = [], currentIdx = -1, lastEval = 0.3, analysisCache = {};
+        var board = null;
+        var game = new Chess();
+        var engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+        
+        var moveHistory = [];
+        var currentIdx = -1;
+        var lastEval = 0.3;
+        var analysisCache = {};
 
         $(document).ready(function() {
+            // Inisialisasi papan dengan tema bidak Wikipedia dari CDN stabil
             board = Chessboard('board', {
                 position: 'start',
+                draggable: false,
                 pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
             });
+            
+            // Paksa ukuran agar muncul di mobile
+            setTimeout(() => { board.resize(); }, 1000);
             $(window).resize(board.resize);
         });
 
@@ -96,17 +108,27 @@
                 let d = await r.json();
                 $('#gameList').empty();
                 d.games.reverse().slice(0, 5).forEach(g => {
-                    $(`<div style="padding:5px; border-bottom:1px solid #333;">vs ${g.white.username == user ? g.black.username : g.white.username}</div>`)
-                    .click(() => { $('#pgnArea').val(g.pgn); $('#statusText').text("PGN Dimuat!"); }).appendTo('#gameList');
+                    let opp = (g.white.username.toLowerCase() == user.toLowerCase() ? g.black.username : g.white.username);
+                    $(`<div style="padding:8px; border-bottom:1px solid #333; cursor:pointer;">vs ${opp}</div>`)
+                    .click(() => { $('#pgnArea').val(g.pgn); $('#statusText').text("PGN Dimuat! Klik START."); })
+                    .appendTo('#gameList');
                 });
-            } catch(e) { $('#gameList').text("Gagal."); }
+            } catch(e) { $('#gameList').text("Gagal ambil game."); }
         }
 
         function initReview() {
-            if (!game.load_pgn($('#pgnArea').val())) return alert("PGN Error");
-            moveHistory = game.history(); game.reset(); board.start();
-            currentIdx = -1; lastEval = 0.3; analysisCache = {};
-            $('#statusText').text("Gunakan tombol panah untuk review.");
+            let pgn = $('#pgnArea').val();
+            if (!game.load_pgn(pgn)) {
+                alert("PGN Tidak Valid!");
+                return;
+            }
+            moveHistory = game.history();
+            game.reset();
+            board.start();
+            currentIdx = -1;
+            lastEval = 0.3;
+            analysisCache = {};
+            $('#statusText').text("Gunakan tombol > untuk mulai review.");
         }
 
         function nextMove() {
@@ -121,15 +143,23 @@
 
         function prevMove() {
             if (currentIdx >= 0) {
-                game.undo(); currentIdx--; board.position(game.fen());
-                if (currentIdx >= 0) showResult(moveHistory[currentIdx], analysisCache[currentIdx]);
-                else { $('#moveDisplay').text("Awal"); $('#labelText').text("SIAP"); }
+                game.undo();
+                currentIdx--;
+                board.position(game.fen());
+                if (currentIdx >= 0) {
+                    showResult(moveHistory[currentIdx], analysisCache[currentIdx]);
+                } else {
+                    $('#moveDisplay').text("Awal");
+                    $('#labelText').text("SIAP");
+                }
             }
         }
 
         function analyzePos(move) {
+            $('#statusText').text("Coach sedang berpikir...");
             engine.postMessage("position fen " + game.fen());
             engine.postMessage("go depth 12");
+            
             engine.onmessage = function(e) {
                 if (e.data.includes("score cp")) {
                     let cp = parseInt(e.data.match(/score cp (-?\d+)/)[1]);
@@ -145,8 +175,8 @@
             let absDiff = Math.abs(diff);
             let label = "Good", color = "var(--good)";
 
-            // KLASIFIKASI ALGORITMA (Mirip Chess.com)
-            if (absDiff < 0.2) { label = "Best"; color = "var(--best)"; }
+            // Klasifikasi Langkah
+            if (absDiff < 0.2) { label = "Best Move ⭐"; color = "var(--best)"; }
             else if (diff > 2.0) { label = "Brilliant !!"; color = "var(--brilliant)"; }
             else if (diff > 1.0) { label = "Great !"; color = "var(--great)"; }
             else if (diff < -2.0) { label = "Blunder ??"; color = "var(--blunder)"; }
@@ -157,7 +187,7 @@
             $('#moveDisplay').text((currentIdx + 1) + ". " + move);
             $('#labelText').text(label).css('color', color);
             $('#infoBar').css('border-left-color', color);
-            $('#statusText').text("Analisis: " + label + " (" + score + ")");
+            $('#statusText').text("Klasifikasi: " + label);
             lastEval = score;
         }
     </script>
