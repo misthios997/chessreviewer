@@ -3,159 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChessReps Clone - Latihan Pembukaan</title>
+    <title>ChessReps Clone - Fix</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet"
-      href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
-      integrity="sha384-q9PFj7xXT99+pnZj7tvwRZFN6W04itnGtH3ICBbQPit6Nq1Ch60zPrp50pS/0fms"
-      crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     
     <style>
         body { background-color: #121212; color: white; font-family: 'Inter', sans-serif; }
-        .chess-card { background-color: #1e1e1e; transition: transform 0.2s; border: 1px solid #333; }
-        .chess-card:hover { transform: translateY(-5px); border-color: #4ade80; }
-        /* Custom board style agar mirip Chessreps */
-        #myBoard { width: 400px; margin: 0 auto; border: 5px solid #333; border-radius: 4px; }
-        .white-1e1d7 { background-color: #ebecd0; }
-        .black-b58863 { background-color: #779556; }
+        .chess-card { background-color: #1e1e1e; border: 1px solid #333; transition: 0.2s; }
+        .chess-card:hover { border-color: #4ade80; transform: translateY(-3px); }
+        #myBoard { width: 100%; max-width: 400px; margin: 0 auto; border: 4px solid #333; }
+        /* Warna kotak papan */
+        .white-1e1d7 { background-color: #ebecd0 !important; }
+        .black-b58863 { background-color: #779556 !important; }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
     <nav class="flex items-center justify-between p-6 border-b border-gray-800">
         <div class="flex items-center space-x-2">
-            <div class="bg-green-500 p-2 rounded-lg">
-                <i class="fas fa-chess-knight text-black text-xl"></i>
-            </div>
-            <span class="text-2xl font-bold tracking-tight">ChessReps</span>
+            <div class="bg-green-500 p-2 rounded-lg"><i class="fas fa-chess-knight text-black text-xl"></i></div>
+            <span class="text-2xl font-bold">ChessReps</span>
         </div>
-        <div class="hidden md:flex space-x-8 text-gray-400 font-medium">
-            <a href="#" class="hover:text-white">Kursus</a>
-            <a href="#" class="hover:text-white">Belajar</a>
-            <a href="#" class="hover:text-white">Harga</a>
-        </div>
-        <button class="bg-white text-black px-6 py-2 rounded-full font-bold hover:bg-gray-200">Login</button>
+        <button class="bg-white text-black px-6 py-2 rounded-full font-bold">Login</button>
     </nav>
 
-    <section class="flex flex-col lg:flex-row items-center justify-center py-16 px-6 gap-12">
+    <section class="flex flex-col lg:flex-row items-center justify-center py-12 px-6 gap-10">
         <div class="max-w-xl text-center lg:text-left">
-            <h1 class="text-5xl md:text-6xl font-extrabold mb-6">Kuasai <span class="text-green-500">Opening</span> Anda.</h1>
-            <p class="text-gray-400 text-lg mb-8">
-                Hafalkan variasi catur dengan metode Spaced Repetition. Coba gerakkan bidak di papan samping untuk memulai!
-            </p>
-            <div class="flex gap-4 justify-center lg:justify-start">
-                <button onclick="resetGame()" class="bg-green-500 text-black px-6 py-3 rounded-xl font-bold hover:bg-green-400">Reset Papan</button>
-                <button class="border border-gray-600 px-6 py-3 rounded-xl font-bold hover:bg-gray-800">Cari Kursus</button>
+            <h1 class="text-5xl font-extrabold mb-6">Kuasai <span class="text-green-500">Opening.</span></h1>
+            <p class="text-gray-400 text-lg mb-8">Latih memori pembukaan catur Anda secara interaktif.</p>
+            
+            <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                <button id="resetBtn" class="bg-green-500 text-black px-8 py-3 rounded-xl font-bold hover:bg-green-400 shadow-lg shadow-green-900/20">
+                    Reset Papan
+                </button>
+                <button onclick="alert('Fitur Kursus akan segera hadir!')" class="bg-gray-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-700">
+                    Cari Kursus
+                </button>
             </div>
-            <div id="status" class="mt-4 text-sm text-gray-500 font-mono">Status: Putih melangkah</div>
+            <div id="status" class="mt-6 p-3 bg-gray-900 rounded-lg inline-block font-mono text-green-400 border border-gray-800">
+                Status: Putih melangkah
+            </div>
         </div>
 
-        <div class="bg-gray-900 p-4 rounded-2xl shadow-2xl border border-gray-700">
+        <div class="bg-[#1e1e1e] p-4 rounded-2xl border border-gray-700 shadow-2xl">
             <div id="myBoard"></div>
         </div>
     </section>
 
-    <main class="max-w-6xl mx-auto p-6 mb-20">
-        <h2 class="text-2xl font-bold mb-8 italic">Kursus Populer</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="chess-card p-4 rounded-2xl cursor-pointer">
-                <div class="bg-gray-800 h-40 rounded-xl mb-4 flex items-center justify-center">
-                    <i class="fas fa-chess-pawn text-5xl text-gray-600"></i>
-                </div>
-                <h3 class="text-xl font-bold">London System</h3>
-                <p class="text-gray-500 text-sm mt-2">Sangat solid untuk pemain putih.</p>
-                <div class="mt-4 text-green-500 font-bold">Gratis <i class="fas fa-arrow-right ml-1 text-xs"></i></div>
-            </div>
-
-            <div class="chess-card p-4 rounded-2xl cursor-pointer">
-                <div class="bg-gray-800 h-40 rounded-xl mb-4 flex items-center justify-center">
-                    <i class="fas fa-chess-knight text-5xl text-gray-600"></i>
-                </div>
-                <h3 class="text-xl font-bold">Sicilian Defense</h3>
-                <p class="text-gray-500 text-sm mt-2">Respon paling tajam melawan 1. e4.</p>
-                <div class="mt-4 text-green-500 font-bold">Premium <i class="fas fa-crown ml-1 text-xs"></i></div>
-            </div>
-
-            <div class="chess-card p-4 rounded-2xl cursor-pointer">
-                <div class="bg-gray-800 h-40 rounded-xl mb-4 flex items-center justify-center">
-                    <i class="fas fa-chess-king text-5xl text-gray-600"></i>
-                </div>
-                <h3 class="text-xl font-bold">King's Gambit</h3>
-                <p class="text-gray-500 text-sm mt-2">Untuk kamu yang suka menyerang sejak awal.</p>
-                <div class="mt-4 text-green-500 font-bold">Gratis <i class="fas fa-arrow-right ml-1 text-xs"></i></div>
-            </div>
-        </div>
-    </main>
-
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://unpkg.com/chess.js@0.10.3/chess.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
     <script>
-        // Logika Catur Dasar
-        var board = null
-        var game = new Chess()
-        var $status = $('#status')
+        $(document).ready(function() {
+            var board = null;
+            var game = new Chess();
+            var $status = $('#status');
 
-        function onDragStart (source, piece, position, orientation) {
-            if (game.game_over()) return false
-            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-                return false
-            }
-        }
-
-        function onDrop (source, target) {
-            var move = game.move({
-                from: source,
-                to: target,
-                promotion: 'q' 
-            })
-
-            if (move === null) return 'snapback'
-            updateStatus()
-        }
-
-        function onSnapEnd () {
-            board.position(game.fen())
-        }
-
-        function updateStatus () {
-            var status = ''
-            var moveColor = 'Putih'
-            if (game.turn() === 'b') moveColor = 'Hitam'
-
-            if (game.in_checkmate()) {
-                status = 'Game over, ' + moveColor + ' kena Skakmat.'
-            } else if (game.in_draw()) {
-                status = 'Game over, Remis.'
-            } else {
-                status = moveColor + ' melangkah'
-                if (game.in_check()) status += ', ' + moveColor + ' kena Skak!'
+            function onDragStart (source, piece, position, orientation) {
+                if (game.game_over()) return false;
+                if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                    (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                    return false;
+                }
             }
 
-            $status.html('Status: ' + status)
-        }
+            function onDrop (source, target) {
+                var move = game.move({
+                    from: source,
+                    to: target,
+                    promotion: 'q'
+                });
 
-        function resetGame() {
-            game.reset()
-            board.start()
-            updateStatus()
-        }
+                if (move === null) return 'snapback';
+                updateStatus();
+            }
 
-        var config = {
-            draggable: true,
-            position: 'start',
-            onDragStart: onDragStart,
-            onDrop: onDrop,
-            onSnapEnd: onSnapEnd,
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-        }
-        board = Chessboard('myBoard', config)
+            function onSnapEnd () {
+                board.position(game.fen());
+            }
 
-        updateStatus()
+            function updateStatus () {
+                var status = '';
+                var moveColor = (game.turn() === 'b') ? 'Hitam' : 'Putih';
+
+                if (game.in_checkmate()) {
+                    status = 'Game over, ' + moveColor + ' kena Skakmat.';
+                } else if (game.in_draw()) {
+                    status = 'Game over, Remis.';
+                } else {
+                    status = moveColor + ' melangkah';
+                    if (game.in_check()) status += ', ' + moveColor + ' kena Skak!';
+                }
+                $status.html('Status: ' + status);
+            }
+
+            var config = {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            };
+
+            board = Chessboard('myBoard', config);
+
+            // Perbaikan event listener tombol Reset
+            $('#resetBtn').on('click', function() {
+                game.reset();
+                board.start();
+                updateStatus();
+            });
+
+            updateStatus();
+        });
     </script>
 </body>
 </html>
