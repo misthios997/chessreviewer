@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Reviewer Diamond - Final Fix</title>
+    <title>Chess Reviewer Pro - Diamond Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { 
@@ -11,13 +11,14 @@
             --brilliant: #15d0b1; --great: #5c8bb0; --best: #96bc4b;
             --inaccuracy: #f0c15c; --mistake: #e6912c; --blunder: #fa4143; --book: #a88865;
         }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        /* FIX PAPAN PENYOK & BUG VISUAL */
+        #opening-display { width: 95vw; max-width: 400px; padding: 8px; margin-bottom: 5px; background: #1a1a1a; border-left: 4px solid var(--book); font-size: 14px; font-weight: bold; color: var(--book); box-sizing: border-box; }
+
         #board-container { 
             width: 95vw; max-width: 400px; aspect-ratio: 1/1; 
             display: grid; grid-template-columns: repeat(8, 1fr); 
-            grid-template-rows: repeat(8, 1fr); border: 2px solid #333; 
+            grid-template-rows: repeat(8, 1fr); border: 3px solid #333; 
             box-sizing: border-box; background-color: #769656; 
         }
         .square { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
@@ -25,7 +26,6 @@
         .black { background-color: #769656; }
         .piece { width: 95%; height: 95%; z-index: 10; pointer-events: none; }
 
-        /* ICON CHESS.COM ASLI */
         .eval-icon { 
             position: absolute; top: -12%; right: -12%; width: 45%; height: 45%; 
             border-radius: 50%; z-index: 100; display: flex; align-items: center; 
@@ -34,9 +34,9 @@
         }
 
         .ui-card { width: 100%; max-width: 400px; background: var(--panel); padding: 15px; border-radius: 8px; margin-top: 10px; box-sizing: border-box; }
-        #list { max-height: 120px; overflow-y: auto; background: #111; margin: 10px 0; border: 1px solid #444; border-radius: 4px; }
-        .game-item { padding: 12px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 14px; }
-        .selected { background: #312e2b !important; border-left: 4px solid var(--green); color: #fff !important; }
+        #list { max-height: 100px; overflow-y: auto; background: #111; margin: 10px 0; border: 1px solid #444; }
+        .game-item { padding: 10px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 13px; }
+        .selected { background: #312e2b !important; border-left: 4px solid var(--green); }
         
         .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
         .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
@@ -50,11 +50,12 @@
     <p>Menganalisis Kualitas Langkah...</p>
 </div>
 
+<div id="opening-display">Opening: Menunggu Analisis...</div>
 <div id="board-container"></div>
 
 <div class="ui-card">
     <div style="display:flex; gap:5px;">
-        <input type="text" id="userInp" placeholder="Username Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px; outline:none;">
+        <input type="text" id="userInp" placeholder="Username Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px;">
         <button class="btn" style="background:#555;" onclick="loadGames()">CARI</button>
     </div>
     <div id="list"></div>
@@ -62,11 +63,11 @@
         <button class="btn btn-nav" onclick="go(-1)">❮</button>
         <button class="btn btn-nav" onclick="go(1)">❯</button>
     </div>
-    <button class="btn" id="btnAnalisis" style="width:100%; background:#444; margin-top:10px; padding:15px; font-size: 16px;" onclick="startAnalysis()">ANALISIS FULL (AKURAT)</button>
+    <button class="btn" id="btnAnalisis" style="width:100%; background:#444; margin-top:10px; padding:15px;" onclick="startAnalysis()">ANALISIS FULL (AKURAT)</button>
     
     <div id="status" style="margin-top:10px; padding:12px; background:#111; display:flex; justify-content:space-between; align-items:center; border-radius:4px;">
         <div>
-            <div id="moveName" style="font-size:10px; color:#888;">SIAP</div>
+            <div id="moveName" style="font-size:10px; color:#888;">POSISI</div>
             <div id="labelDisplay" style="font-weight:900; font-size:18px; color:#444;">---</div>
         </div>
         <div id="scoreDisplay" style="font-size:24px; font-weight:900; color:#444;">0.0</div>
@@ -74,27 +75,24 @@
 </div>
 
 <script>
-    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "";
+    let game = new Chess(), gHistory = [], gIdx = -1, analysisResults = [], selectedPgn = "", openingName = "";
 
     function drawBoard() {
         const boardEl = document.getElementById('board-container');
-        boardEl.innerHTML = ''; // Membersihkan total papan agar bidak tidak double
+        boardEl.innerHTML = '';
         const currentBoard = game.board();
 
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.createElement('div');
                 sq.className = `square ${(r + c) % 2 === 0 ? 'white' : 'black'}`;
-                
-                const piece = currentBoard[r][c];
-                if (piece) {
+                const p = currentBoard[r][c];
+                if (p) {
                     const img = document.createElement('img');
                     img.className = 'piece';
-                    img.src = `https://www.chess.com/chess-themes/pieces/neo/150/${piece.color}${piece.type}.png`;
+                    img.src = `https://www.chess.com/chess-themes/pieces/neo/150/${p.color}${p.type}.png`;
                     sq.appendChild(img);
                 }
-
-                // Gambar Icon Review hanya pada langkah yang sedang aktif
                 if (gIdx >= 0 && gHistory[gIdx]) {
                     const move = gHistory[gIdx];
                     const coord = String.fromCharCode(97 + c) + (8 - r);
@@ -115,8 +113,6 @@
     async function loadGames() {
         const u = document.getElementById('userInp').value;
         const listDiv = document.getElementById('list');
-        if(!u) return;
-        listDiv.innerHTML = "<div style='padding:15px;'>Mencari archives...</div>";
         try {
             const arc = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`).then(r => r.json());
             const last = await fetch(arc.archives[arc.archives.length-1]).then(r => r.json());
@@ -124,7 +120,7 @@
             last.games.reverse().slice(0,5).forEach(g => {
                 const div = document.createElement('div');
                 div.className = 'game-item';
-                div.innerText = `vs ${g.white.username === u ? g.black.username : g.white.username} (${g.time_class})`;
+                div.innerText = `vs ${g.white.username === u ? g.black.username : g.white.username}`;
                 div.onclick = () => {
                     selectedPgn = g.pgn;
                     document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
@@ -133,7 +129,7 @@
                 };
                 listDiv.appendChild(div);
             });
-        } catch(e) { listDiv.innerHTML = "<div style='padding:15px; color:red;'>User tidak ditemukan.</div>"; }
+        } catch(e) { listDiv.innerHTML = "User Error"; }
     }
 
     async function startAnalysis() {
@@ -141,6 +137,12 @@
         document.getElementById('loading-overlay').style.display = 'flex';
         let temp = new Chess(); temp.load_pgn(selectedPgn);
         gHistory = temp.history({verbose: true});
+        
+        // Cari nama Opening dari PGN
+        const opMatch = selectedPgn.match(/\[Opening "(.*?)"\]/);
+        openingName = opMatch ? opMatch[1] : "Custom Game";
+        document.getElementById('opening-display').innerText = "Opening: " + openingName;
+
         temp.reset(); analysisResults = [];
         let lastEval = 0.2; 
 
@@ -149,7 +151,7 @@
             document.getElementById('load-pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
             
             let curEval = lastEval;
-            let isBook = i < 10; // 10 langkah pertama sebagai Book Move
+            let isCloudData = false;
 
             try {
                 const res = await fetch(`https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(temp.fen())}`);
@@ -157,8 +159,8 @@
                     const data = await res.json();
                     if (data.pvs && data.pvs[0]) {
                         const cp = data.pvs[0].cp;
-                        // Normalisasi Turn agar skor akurat
                         curEval = (temp.turn() === 'b' ? cp : -cp) / 100;
+                        isCloudData = true;
                     }
                 }
             } catch (e) {}
@@ -166,12 +168,13 @@
             const diff = curEval - lastEval;
             let r;
 
-            // KLASIFIKASI KETAT (Mencegah "Best Move" semua)
-            if (isBook) r = { sym: '📖', color: 'var(--book)', label: 'BOOK' };
+            // LOGIKA ANTI-BEST-SEMUA
+            if (i < 8) r = { sym: '📖', color: 'var(--book)', label: 'BOOK' };
+            else if (!isCloudData) r = { sym: '✓', color: 'var(--green)', label: 'GOOD' };
             else if (diff < -2.0) r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' };
-            else if (diff < -0.8) r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' };
+            else if (diff < -0.9) r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' };
             else if (diff < -0.3) r = { sym: '?!', color: 'var(--inaccuracy)', label: 'INACCURACY' };
-            else if (diff > 1.5) r = { sym: '!!', color: 'var(--brilliant)', label: 'BRILLIANT' };
+            else if (diff > 1.8) r = { sym: '!!', color: 'var(--brilliant)', label: 'BRILLIANT' };
             else if (diff > 0.6) r = { sym: '!', color: 'var(--great)', label: 'GREAT' };
             else if (Math.abs(diff) < 0.1) r = { sym: '★', color: 'var(--best)', label: 'BEST' };
             else r = { sym: '✓', color: 'var(--green)', label: 'GOOD' };
@@ -193,12 +196,7 @@
             document.getElementById('labelDisplay').style.color = r.color;
             document.getElementById('scoreDisplay').innerText = (r.score > 0 ? "+" : "") + r.score.toFixed(1);
             document.getElementById('scoreDisplay').style.color = r.score >= 0 ? "#fff" : "#ff4444";
-            document.getElementById('moveName').innerText = `Langkah ${gIdx+1}: ${gHistory[gIdx].san}`;
-        } else {
-            document.getElementById('labelDisplay').innerText = "READY";
-            document.getElementById('labelDisplay').style.color = "#444";
-            document.getElementById('scoreDisplay').innerText = "0.0";
-            document.getElementById('moveName').innerText = "POSISI AWAL";
+            document.getElementById('moveName').innerText = `Move ${gIdx+1}: ${gHistory[gIdx].san}`;
         }
         drawBoard();
     }
