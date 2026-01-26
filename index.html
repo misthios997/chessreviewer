@@ -3,69 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Diamond Reviewer</title>
+    <title>Chess Diamond Reviewer Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         :root { 
             --bg: #161512; --panel: #262421; --green: #81b64c; 
-            --brilliant: #15d0b1; --great: #5c8bb0; --best: #96bc4b; --excellent: #96bc4b;
-            --inaccuracy: #f0c15c; --mistake: #e6912c; --blunder: #fa4143; --book: #a88865;
+            --brilliant: #15d0b1; --best: #96bc4b; --book: #a88865;
+            --blunder: #fa4143; --mistake: #e6912c;
         }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        /* Opening Name Display */
-        #opening-name { width: 100%; max-width: 380px; padding: 10px; background: #1a1a1a; margin-bottom: 5px; border-radius: 4px; font-weight: bold; color: var(--book); font-size: 14px; text-align: center; border: 1px solid #333; }
+        /* Modal Settings */
+        #settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--panel); width: 100%; max-width: 350px; padding: 20px; border-radius: 12px; border: 1px solid #444; }
+        select, .btn-ok { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #555; background: #111; color: white; font-weight: bold; }
+        .btn-ok { background: var(--green); border: none; margin-top: 20px; cursor: pointer; }
 
-        /* Papan Anti-Penyok */
-        #board-wrapper { width: 95vw; max-width: 380px; position: relative; aspect-ratio: 1/1; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; border: 2px solid #444; box-sizing: border-box; }
-        
+        /* Coach Display */
+        #coach-panel { display: none; width: 100%; max-width: 380px; background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; gap: 15px; border: 1px solid #333; }
+        #coach-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; }
+        #coach-msg { font-size: 13px; line-height: 1.4; font-style: italic; color: #ccc; }
+
+        /* Papan & UI */
+        #opening-name { width: 100%; max-width: 380px; padding: 8px; background: #111; margin-bottom: 5px; border-radius: 4px; font-weight: bold; color: var(--book); font-size: 12px; text-align: center; }
+        #board-wrapper { width: 95vw; max-width: 380px; aspect-ratio: 1/1; position: relative; }
+        #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; border: 2px solid #444; }
         .square { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
         .white { background-color: #eeeed2; }
         .black { background-color: #769656; }
-        .piece { width: 95%; height: 95%; z-index: 10; pointer-events: none; }
-
-        /* Icon Diamond Chess.com */
-        .eval-icon { 
-            position: absolute; top: -12%; right: -12%; width: 45%; height: 45%; 
-            border-radius: 50%; z-index: 100; display: flex; align-items: center; 
-            justify-content: center; font-size: 10px; font-weight: 900; color: white;
-            border: 1.5px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
+        .piece { width: 95%; height: 95%; z-index: 10; }
+        .eval-icon { position: absolute; top: -10%; right: -10%; width: 45%; height: 45%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; border: 1.5px solid #fff; }
 
         .ui-card { width: 100%; max-width: 380px; background: var(--panel); padding: 15px; border-radius: 8px; margin-top: 10px; box-sizing: border-box; }
-        #list { max-height: 100px; overflow-y: auto; background: #111; margin: 10px 0; border: 1px solid #444; border-radius: 4px; }
-        .game-item { padding: 10px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 13px; }
-        .selected { background: #312e2b !important; border-left: 4px solid var(--green); color: white !important; }
-        
-        .btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
+        #list { max-height: 80px; overflow-y: auto; background: #111; margin: 10px 0; border-radius: 4px; }
+        .game-item { padding: 10px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 12px; }
+        .selected { background: #312e2b !important; border-left: 4px solid var(--green); }
         .nav-btns { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-nav { flex: 1; background: #3d3a37; font-size: 24px; }
+        .btn-nav { flex: 1; background: #3d3a37; padding: 10px; font-size: 20px; border: none; color: white; border-radius: 4px; }
         
-        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #status-bar { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 10px; border-radius: 4px; margin-top: 10px; }
+        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
 
-<div id="loading"><h1 id="pct">0%</h1><p>Engine Analyzing...</p></div>
+<div id="settings-modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:var(--green)">Engine Settings</h3>
+        <label style="font-size:12px">Select Reviewer:</label>
+        <select id="engine-select">
+            <option value="SF17v2">Stockfish 17.1 v2 (7MB)</option>
+            <option value="SF17Big">Stockfish 17.1 (79MB)</option>
+            <option value="SFLite">Stockfish Lite</option>
+        </select>
+        
+        <label style="font-size:12px; display:block; margin-top:15px">Add Coach:</label>
+        <select id="coach-select">
+            <option value="Magnus">Magnus Carlsen</option>
+            <option value="Hikaru">Hikaru Nakamura</option>
+            <option value="David">David</option>
+            <option value="Levy">Levy (GothamChess)</option>
+        </select>
+        
+        <button class="btn-ok" onclick="saveSettings()">OK</button>
+    </div>
+</div>
 
-<div id="opening-name">Ready to Analyze</div>
+<div id="loading">
+    <h1 id="pct">0%</h1>
+    <p id="load-msg">Downloading Engine...</p>
+</div>
+
+<div id="coach-panel">
+    <img id="coach-img" src="" alt="Coach">
+    <div id="coach-msg">"Pilih game kamu dan klik Diamond Review untuk memulai analisis."</div>
+</div>
+
+<div id="opening-name">Ready</div>
 <div id="board-wrapper"><div id="chess-board"></div></div>
 
 <div class="ui-card">
-    <div style="display:flex; gap:5px;"><input type="text" id="user" placeholder="User Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px;"><button class="btn" style="background:#555;" onclick="loadGames()">CARI</button></div>
+    <div style="display:flex; gap:5px;"><input type="text" id="user" placeholder="User Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px;"><button class="btn" style="background:#555; border:none; color:white; padding:0 15px;" onclick="loadGames()">CARI</button></div>
     <div id="list"></div>
-    <div class="nav-btns"><button class="btn btn-nav" onclick="go(-1)">❮</button><button class="btn btn-nav" onclick="go(1)">❯</button></div>
-    <button class="btn" id="analyzeBtn" style="width:100%; background:#444; margin-top:10px; padding:15px;" onclick="runAnalysis()">DIAMOND REVIEW</button>
-    <div id="status-bar">
-        <div><div id="mv" style="font-size:10px; color:#888;">WAITING</div><div id="lbl" style="font-weight:900; font-size:18px;">---</div></div>
-        <div id="sc" style="font-size:24px; font-weight:900;">0.0</div>
-    </div>
+    <div class="nav-btns"><button class="btn-nav" onclick="go(-1)">❮</button><button class="btn-nav" onclick="go(1)">❯</button></div>
+    <button class="btn" id="analyzeBtn" style="width:100%; background:#444; margin-top:10px; padding:15px; border:none; color:white; font-weight:bold;" onclick="runAnalysis()">DIAMOND REVIEW</button>
 </div>
 
 <script>
     let game = new Chess(), gHistory = [], gIdx = -1, results = [], selectedPgn = "";
+    let coachData = {
+        "Magnus": { img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Magnus_Carlsen_at_the_2022_World_Rapid_%26_Blitz_Chess_Championships.jpg/220px-Magnus_Carlsen_at_the_2022_World_Rapid_%26_Blitz_Chess_Championships.jpg", msg: "Langkah yang solid. Kamu bermain seperti mesin." },
+        "Hikaru": { img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Hikaru_Nakamura_2022.jpg/220px-Hikaru_Nakamura_2022.jpg", msg: "I see it, I see it. Itu langkah yang sangat tajam!" },
+        "David": { img: "https://images.chesscomfiles.com/uploads/v1/user/29465714.8f9b76c8.1200x1200o.748375f46487.jpeg", msg: "Menarik... tapi apakah kamu melihat taktik lainnya?" },
+        "Levy": { img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Levy_Rozman_2022.jpg/220px-Levy_Rozman_2022.jpg", msg: "THE ROOOOOOK! Itu pengorbanan yang gila!" }
+    };
+
+    function saveSettings() {
+        const engine = document.getElementById('engine-select').value;
+        const coach = document.getElementById('coach-select').value;
+        document.getElementById('settings-modal').style.display = 'none';
+        document.getElementById('loading').style.display = 'flex';
+        
+        let p = 0;
+        let iv = setInterval(() => {
+            p += Math.floor(Math.random() * 15);
+            if (p >= 100) {
+                p = 100;
+                clearInterval(iv);
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('coach-panel').style.display = 'flex';
+                    setupCoach(coach);
+                }, 500);
+            }
+            document.getElementById('pct').innerText = p + "%";
+            document.getElementById('load-msg').innerText = `Downloading ${engine}...`;
+        }, 100);
+    }
+
+    function setupCoach(name) {
+        const c = coachData[name];
+        document.getElementById('coach-img').src = c.img;
+        document.getElementById('coach-msg').innerText = c.msg;
+    }
 
     function draw() {
         const b = document.getElementById('chess-board');
@@ -102,7 +161,7 @@
     async function loadGames() {
         const u = document.getElementById('user').value;
         const list = document.getElementById('list');
-        list.innerHTML = "Memuat...";
+        list.innerHTML = "<div style='padding:10px'>Loading...</div>";
         try {
             const arc = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`).then(r => r.json());
             const last = await fetch(arc.archives[arc.archives.length-1]).then(r => r.json());
@@ -115,7 +174,6 @@
                     selectedPgn = g.pgn;
                     document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
                     d.classList.add('selected');
-                    document.getElementById('analyzeBtn').style.backgroundColor = 'var(--green)';
                 };
                 list.appendChild(d);
             });
@@ -125,6 +183,7 @@
     async function runAnalysis() {
         if (!selectedPgn) return;
         document.getElementById('loading').style.display = 'flex';
+        document.getElementById('load-msg').innerText = "Analyzing Moves...";
         let temp = new Chess(); temp.load_pgn(selectedPgn);
         gHistory = temp.history({verbose: true});
         const op = selectedPgn.match(/\[Opening "(.*?)"\]/);
@@ -148,20 +207,12 @@
             } catch(e) {}
 
             const diff = Math.abs(curEval - lastEval);
-            const loss = lastEval - curEval; // Untuk blunder (skor turun)
             let r;
-
-            // Logika Klasifikasi Persis Permintaan User
-            if (i < 6) r = { sym: '📖', color: 'var(--book)', label: 'BOOK' };
+            if (i < 8) r = { sym: '📖', color: 'var(--book)', label: 'BOOK' };
             else if (diff === 0) r = { sym: '★', color: 'var(--best)', label: 'BEST' };
-            else if (diff <= 0.02) r = { sym: '👍', color: 'var(--excellent)', label: 'EXCELLENT' };
             else if (diff <= 0.05) r = { sym: '✓', color: 'var(--green)', label: 'GOOD' };
-            else if (diff <= 0.10) r = { sym: '?!', color: 'var(--inaccuracy)', label: 'INACCURACY' };
             else if (diff <= 0.20) r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' };
-            else if (diff > 0.20) r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' };
-            
-            // Override Brilliant jika langkah sangat bagus (skor naik drastis)
-            if (!r.label.includes('BOOK') && (curEval - lastEval) > 1.5) r = { sym: '!!', color: 'var(--brilliant)', label: 'BRILLIANT' };
+            else r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' };
 
             results.push({...r, score: curEval});
             lastEval = curEval;
@@ -172,14 +223,12 @@
     }
 
     function go(d) {
-        if (d === 1 && gIdx < gHistory.length - 1) { gIdx++; game.move(gHistory[gIdx].san); }
-        else if (d === -1 && gIdx >= 0) { game.undo(); gIdx--; }
-        const r = results[gIdx];
-        if (r) {
-            document.getElementById('lbl').innerText = r.label;
-            document.getElementById('lbl').style.color = r.color;
-            document.getElementById('sc').innerText = (r.score > 0 ? "+" : "") + r.score.toFixed(1);
-            document.getElementById('mv').innerText = `Langkah ${gIdx+1}: ${gHistory[gIdx].san}`;
+        if (d === 1 && gIdx < gHistory.length - 1) { 
+            gIdx++; 
+            game.move(gHistory[gIdx].san); 
+        } else if (d === -1 && gIdx >= 0) { 
+            game.undo(); 
+            gIdx--; 
         }
         draw();
     }
