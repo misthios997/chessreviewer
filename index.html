@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neo Chess Trainer - Interactive</title>
+    <title>Neo Chess Trainer - Mobile Ready</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
@@ -28,140 +28,154 @@
             margin: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        .container { text-align: center; width: 100%; max-width: 1000px; padding: 20px; }
+        .container { 
+            width: 100%; 
+            max-width: 1000px; 
+            padding: 20px; 
+            text-align: center; 
+        }
 
         h1 { 
             font-family: 'Orbitron', sans-serif; 
             color: var(--neo-green); 
             text-shadow: 0 0 15px var(--neo-green);
-            margin-bottom: 30px;
+            font-size: 1.5rem;
         }
 
         /* Menu Utama */
         #main-menu {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            max-width: 600px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
 
         .menu-card {
             background: var(--panel);
             border: 1px solid #333;
             padding: 20px;
-            border-radius: 15px;
-            transition: 0.3s;
+            border-radius: 12px;
             cursor: pointer;
+            transition: 0.3s;
         }
 
         .menu-card:hover {
             border-color: var(--neo-blue);
-            transform: translateY(-5px);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
         }
 
-        .menu-card h3 { margin: 0; color: var(--neo-blue); }
+        .menu-card h3 { margin: 0 0 10px 0; color: var(--neo-blue); }
+        .menu-card p { margin: 0; font-size: 0.9rem; color: #aaa; }
 
-        /* Papan Area (Hidden at start) */
+        /* Area Trainer */
         #trainer-area {
             display: none;
-            flex-direction: row;
-            gap: 40px;
+            flex-direction: row; /* Default sampingan untuk Laptop */
+            gap: 20px;
             justify-content: center;
             align-items: flex-start;
-            animation: fadeIn 0.8s ease;
+            margin-top: 10px;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
         #myBoard {
-            width: 450px;
-            border: 8px solid #222;
-            border-radius: 5px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            width: 90vw;
+            max-width: 400px; /* Ukuran ideal papan */
+            margin: 0 auto;
+            border: 4px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         .side-panel {
-            width: 350px;
-            text-align: left;
+            width: 100%;
+            max-width: 400px;
             background: var(--panel);
-            padding: 25px;
-            border-radius: 15px;
-            border-left: 5px solid var(--neo-green);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: left;
+            border-left: 4px solid var(--neo-green);
+            box-sizing: border-box;
+        }
+
+        /* Responsif untuk HP */
+        @media (max-width: 800px) {
+            #trainer-area {
+                flex-direction: column; /* Tumpuk vertikal di HP */
+                align-items: center;
+            }
+            h1 { font-size: 1.2rem; }
         }
 
         button.back-btn {
             background: none;
             border: 1px solid var(--neo-red);
             color: var(--neo-red);
-            padding: 8px 15px;
+            padding: 10px 20px;
             cursor: pointer;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-family: 'Orbitron';
+            font-size: 0.8rem;
+            width: 100%;
         }
 
         .status-badge {
             background: #000;
             padding: 10px;
             border-radius: 5px;
-            border: 1px solid #333;
-            margin: 15px 0;
             font-family: monospace;
             color: var(--neo-green);
+            margin: 10px 0;
+            border: 1px solid #222;
         }
 
-        .explanation { font-size: 0.95rem; color: #ccc; line-height: 1.6; }
-        
-        .highlight { color: var(--neo-green); font-weight: bold; }
+        .explanation { font-size: 0.9rem; line-height: 1.5; color: #ccc; }
+        .highlight { color: var(--neo-blue); font-weight: bold; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div id="header-section">
-            <h1>NEO CHESS AI TRAINER</h1>
+            <h1>NEO CHESS TRAINER</h1>
+            <p style="color: #666;">Pilih materi untuk memulai papan</p>
         </div>
 
         <div id="main-menu">
-            <div class="menu-card" onclick="startTrainer('Ruy Lopez', 'opening')">
+            <div class="menu-card" onclick="startTrainer('Ruy Lopez')">
                 <h3>Ruy Lopez</h3>
-                <p>Pembukaan klasik untuk kontrol pusat maksimal.</p>
+                <p>Opening klasik paling solid untuk Putih.</p>
             </div>
-            <div class="menu-card" onclick="startTrainer('Sicilian', 'opening')">
+            <div class="menu-card" onclick="startTrainer('Sicilian Defense')">
                 <h3>Sicilian Defense</h3>
-                <p>Taktik serangan balik tajam untuk Hitam.</p>
+                <p>Serangan balik tajam dari sisi sayap.</p>
             </div>
-            <div class="menu-card" onclick="startTrainer('Scholars Mate', 'tactic')">
+            <div class="menu-card" onclick="startTrainer('Scholar\'s Mate')">
                 <h3>Scholar's Mate</h3>
-                <p><span style="color:var(--neo-red)">Quick Win:</span> Menang dalam 4 langkah!</p>
+                <p><b style="color:var(--neo-red)">AI Tactic:</b> Menang dalam 4 langkah!</p>
             </div>
-            <div class="menu-card" onclick="startTrainer('Fried Liver', 'tactic')">
-                <h3>Fried Liver Attack</h3>
-                <p>Taktik pengorbanan Kuda untuk menghancurkan Raja.</p>
+            <div class="menu-card" onclick="startTrainer('Fried Liver')">
+                <h3>Fried Liver</h3>
+                <p><b style="color:var(--neo-red)">AI Tactic:</b> Korbankan Kuda untuk menyerang.</p>
             </div>
         </div>
 
         <div id="trainer-area">
-            <div>
+            <div style="width: 100%; max-width: 400px;">
                 <button class="back-btn" onclick="goBack()">← KEMBALI KE MENU</button>
                 <div id="myBoard"></div>
             </div>
 
             <div class="side-panel">
-                <h2 id="topic-title">Judul Materi</h2>
+                <h2 id="topic-title" style="margin-top:0; color:var(--neo-blue)">Materi</h2>
                 <div class="status-badge" id="status">Putih Melangkah</div>
                 
                 <div class="explanation">
-                    <p id="topic-desc">Penjelasan taktik akan muncul di sini...</p>
-                    <p class="highlight">Tips AI:</p>
-                    <ul id="ai-tips">
-                        <li>Selalu amati pergerakan menteri lawan.</li>
+                    <p id="topic-desc">Deskripsi strategi...</p>
+                    <span class="highlight">Saran AI:</span>
+                    <ul id="ai-tips" style="padding-left: 20px;">
+                        <li>Gerakkan bidak tengah dulu.</li>
                     </ul>
                 </div>
             </div>
@@ -171,21 +185,17 @@
     <script>
         var board = null;
         var game = new Chess();
-        
-        function startTrainer(name, type) {
-            // Sembunyikan menu, tampilkan papan
+
+        function startTrainer(name) {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('header-section').style.display = 'none';
             document.getElementById('trainer-area').style.display = 'flex';
             
-            // Set judul dan deskripsi
             document.getElementById('topic-title').innerText = name;
             
-            // Inisialisasi logika
             game.reset();
-            setupMateri(name);
-            
-            // Inisialisasi Papan
+            setupLogic(name);
+
             if (board === null) {
                 board = Chessboard('myBoard', {
                     draggable: true,
@@ -194,36 +204,36 @@
                     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
                 });
             }
+            
             board.position(game.fen());
+            // Paksa papan resize agar tidak error tampilannya
+            setTimeout(() => { board.resize(); }, 100);
             updateStatus();
         }
 
-        function setupMateri(name) {
+        function setupLogic(name) {
             let desc = "";
             let tips = "";
 
             if (name === 'Ruy Lopez') {
                 game.move('e4'); game.move('e5'); game.move('Nf3'); game.move('Nc6'); game.move('Bb5');
-                desc = "Ini adalah pembukaan paling populer. Gajah putih di b5 menekan kuda hitam yang melindungi pusat.";
-                tips = "<li>Fokus pada kontrol petak d4 dan e4.</li><li>Segera lakukan Rokade.</li>";
-            } 
-            else if (name === 'Scholars Mate') {
-                game.move('e4'); game.move('e5'); game.move('Qh5'); game.move('Nc6'); game.move('Bc4'); game.move('Nf6');
-                desc = "Disebut juga 'Skakmat 4 Langkah'. Putih mengincar titik lemah f7 dengan Menteri dan Gajah.";
-                tips = "<li>Hanya manjur lawan pemula.</li><li>Jika kamu Hitam, cegah dengan g6 atau Qe7.</li>";
-            }
-            else if (name === 'Fried Liver') {
+                desc = "Putih menekan Kuda di c6 untuk melemahkan kontrol pusat Hitam.";
+                tips = "<li>Kuasai pusat (e4).</li><li>Siapkan Rokade pendek.</li>";
+            } else if (name === 'Scholar\'s Mate') {
+                game.move('e4'); game.move('e5'); game.move('Qh5'); game.move('Nc6'); game.move('Bc4');
+                desc = "Taktik kilat mengincar titik f7. Jika Hitam lalai, permainan selesai di langkah ke-4.";
+                tips = "<li>Incar pion f7.</li><li>Jangan biarkan Menteri terjebak.</li>";
+            } else if (name === 'Fried Liver') {
                 game.move('e4'); game.move('e5'); game.move('Nf3'); game.move('Nc6'); game.move('Bc4'); game.move('Nf6'); game.move('Ng5');
-                desc = "Serangan agresif ke arah titik f7. Putih siap mengorbankan kuda demi membongkar pertahanan Raja.";
-                tips = "<li>Sangat berbahaya bagi Hitam jika tidak tahu cara melawannya.</li><li>Gunakan pertahanan Traxler jika ingin counter-attack.</li>";
-            }
-            else if (name === 'Sicilian') {
+                desc = "Serangan frontal ke Raja Hitam menggunakan Kuda dan Gajah.";
+                tips = "<li>Tekan f7 sekuat mungkin.</li><li>Siap korbankan perwira untuk open king.</li>";
+            } else if (name === 'Sicilian Defense') {
                 game.move('e4'); game.move('c5');
-                desc = "Hitam tidak membalas e5, tapi c5. Ini menciptakan permainan yang asimetris dan agresif.";
-                tips = "<li>Hitam biasanya mencoba menyerang dari sayap menteri.</li>";
+                desc = "Hitam mencoba memecah konsentrasi pusat Putih dengan langkah c5.";
+                tips = "<li>Mainkan d6 untuk memperkuat struktur.</li><li>Waspadai serangan diagonal putih.</li>";
             }
 
-            document.getElementById('topic-desc').innerHTML = desc;
+            document.getElementById('topic-desc').innerText = desc;
             document.getElementById('ai-tips').innerHTML = tips;
         }
 
@@ -235,10 +245,9 @@
 
         function updateStatus() {
             let status = game.turn() === 'w' ? "Giliran Putih" : "Giliran Hitam";
-            if (game.in_checkmate()) status = "SKAKMAT! Permainan Selesai.";
-            else if (game.in_draw()) status = "REMIS (STALEMATE/DRAW).";
-            else if (game.in_check()) status += " (SEDANG DISKAK!)";
-            
+            if (game.in_checkmate()) status = "SKAKMAT!";
+            else if (game.in_draw()) status = "REMIS / STALEMATE";
+            else if (game.in_check()) status += " (CHECK!)";
             document.getElementById('status').innerText = status;
         }
 
@@ -247,6 +256,11 @@
             document.getElementById('header-section').style.display = 'block';
             document.getElementById('trainer-area').style.display = 'none';
         }
+
+        // Auto-resize jika layar diputar (orientasi landscape/portrait)
+        $(window).on('resize', function() {
+            if(board) board.resize();
+        });
     </script>
 </body>
 </html>
