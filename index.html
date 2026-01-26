@@ -3,165 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Chess Trainer</title>
+    <title>Neo Chess Trainer</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
     <style>
         :root {
-            --primary: #4a752c;
-            --secondary: #ebecd0;
-            --dark: #2c2c2c;
-            --text: #333;
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --neo-green: #00ff41;
+            --neo-blue: #00d4ff;
+            --text: #e0e0e0;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #f4f4f4;
+            background-color: var(--bg);
             color: var(--text);
-        }
-
-        header {
-            background-color: var(--primary);
-            color: white;
-            padding: 2rem;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        nav {
+            font-family: 'Orbitron', sans-serif;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { color: var(--neo-green); text-shadow: 0 0 10px var(--neo-green); }
+
+        .main-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
-            background: #333;
-            padding: 1rem;
+            max-width: 1200px;
         }
 
-        nav a {
-            color: white;
-            text-decoration: none;
+        /* Styling Papan Catur */
+        #myBoard {
+            width: 450px;
+            border: 5px solid #333;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Kontrol & Info */
+        .controls {
+            width: 350px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+
+        button {
+            background: transparent;
+            color: var(--neo-blue);
+            border: 1px solid var(--neo-blue);
+            padding: 10px;
+            cursor: pointer;
             font-weight: bold;
-            cursor: pointer;
-        }
-
-        nav a:hover { color: #81b64c; }
-
-        .container {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .card {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-            display: none; /* Hidden by default */
-        }
-
-        .active { display: block; }
-
-        .opening-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .opening-item {
-            border: 2px solid var(--primary);
-            padding: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
             transition: 0.3s;
+            border-radius: 5px;
         }
 
-        .opening-item:hover { background: var(--secondary); }
+        button:hover {
+            background: var(--neo-blue);
+            color: black;
+            box-shadow: 0 0 15px var(--neo-blue);
+        }
 
-        footer { text-align: center; padding: 2rem; color: #777; }
-        
-        b { color: var(--primary); }
+        .status-box {
+            margin-top: 20px;
+            padding: 10px;
+            background: #000;
+            border-left: 4px solid var(--neo-green);
+            font-family: monospace;
+        }
+
+        .guide { margin-top: 10px; font-size: 0.9rem; line-height: 1.5; color: #aaa; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>♟️ Master Chess Trainer</h1>
-    <p>Belajar catur dari nol sampai skakmat!</p>
-</header>
+    <h1>NEO CHESS TRAINER</h1>
 
-<nav>
-    <a onclick="showSection('rules')">Aturan Dasar</a>
-    <a onclick="showSection('openings')">Opening Moves</a>
-    <a onclick="showSection('endgame')">Checkmate & Draw</a>
-</nav>
-
-<div class="container">
-    
-    <div id="rules" class="card active">
-        <h2>Cara Bermain Catur</h2>
-        <p>Catur dimainkan oleh dua orang di atas papan 8x8. Tujuannya adalah menjebak Raja lawan.</p>
-        <ul>
-            <li><b>Pion:</b> Maju satu langkah (dua saat awal), makan menyamping.</li>
-            <li><b>Kuda (Knight):</b> Bergerak membentuk pola 'L'. Satu-satunya yang bisa melompati bidak lain.</li>
-            <li><b>Gajah (Bishop):</b> Bergerak diagonal tanpa batas.</li>
-            <li><b>Benteng (Rook):</b> Bergerak lurus vertikal atau horizontal.</li>
-            <li><b>Menteri (Queen):</b> Kombinasi Benteng dan Gajah (Paling kuat!).</li>
-            <li><b>Raja (King):</b> Hanya satu langkah ke segala arah.</li>
-        </ul>
-    </div>
-
-    <div id="openings" class="card">
-        <h2>Pelajari Pembukaan (Openings)</h2>
-        <p>3-4 langkah pertama sangat menentukan dominasi papan tengah.</p>
-        <div class="opening-grid">
-            <div class="opening-item" onclick="alert('e4 - e5 | Nf3 - Nc6 | Bb5\nIni adalah pembukaan tertua dan paling solid.')">
-                <h3>Ruy Lopez</h3>
-                <small>Fokus pada kontrol tengah dan tekanan cepat.</small>
+    <div class="main-container">
+        <div>
+            <div id="myBoard"></div>
+            <div class="status-box">
+                Status: <span id="status">Putih melangkah</span><br>
+                History: <span id="history">-</span>
             </div>
-            <div class="opening-item" onclick="alert('e4 - c5\nHitam langsung menyerang dari sayap untuk ketidakseimbangan.')">
-                <h3>Sicilian Defense</h3>
-                <small>Pilihan paling populer untuk menang sebagai Hitam.</small>
+        </div>
+
+        <div class="controls">
+            <h3>Learn Openings</h3>
+            <div class="btn-group">
+                <button onclick="loadOpening('Ruy Lopez')">Ruy Lopez (Mainstream)</button>
+                <button onclick="loadOpening('Sicilian')">Sicilian Defense (Aggressive)</button>
+                <button onclick="loadOpening('Queens Gambit')">Queen's Gambit (Strategic)</button>
+                <button onclick="resetGame()" style="border-color: #ff4b2b; color: #ff4b2b;">Reset Board</button>
             </div>
-            <div class="opening-item" onclick="alert('d4 - d5 | c4\nPutih mengorbankan pion samping untuk kontrol pusat.')">
-                <h3>Queen\'s Gambit</h3>
-                <small>Strategis dan penuh jebakan posisi.</small>
+
+            <hr style="border: 0.5px solid #333; margin: 20px 0;">
+
+            <h3>Glossary</h3>
+            <div class="guide">
+                <details>
+                    <summary><b>Apa itu Checkmate?</b></summary>
+                    Raja terjepit dan tidak bisa lari lagi. GAME OVER.
+                </details>
+                <details>
+                    <summary><b>Apa itu Stalemate?</b></summary>
+                    Giliran kamu jalan, tapi tidak ada langkah legal DAN kamu tidak sedang diskak. Hasil: DRAW (Remis).
+                </details>
+                <details>
+                    <summary><b>Cara Menang?</b></summary>
+                    Kuasai bagian tengah papan (e4, e5, d4, d5) dan lindungi Raja dengan Rokade secepat mungkin.
+                </details>
             </div>
         </div>
     </div>
 
-    <div id="endgame" class="card">
-        <h2>Kondisi Akhir Permainan</h2>
-        <hr>
-        <h3>1. Checkmate (Skakmat)</h3>
-        <p>Kondisi di mana Raja dalam posisi terancam (skak) dan <b>tidak ada langkah aman</b> lagi untuk melarikan diri. Permainan berakhir, yang melakukan skakmat menang.</p>
-        
-        <h3>2. Stalemate (Remis/Pat)</h3>
-        <p>Kondisi unik di mana giliran pemain bergerak, Raja mereka <b>tidak sedang diskak</b>, tetapi mereka <b>tidak punya langkah legal</b> satu pun. Hasilnya: <b>Seri (Draw)</b>.</p>
-        
-        <h3>3. Draw (Lainnya)</h3>
-        <ul>
-            <li><b>Insufficient Material:</b> Bidak yang tersisa tidak cukup untuk skakmat (misal: Raja vs Raja).</li>
-            <li><b>Threefold Repetition:</b> Posisi yang sama persis terjadi 3 kali berturut-turut.</li>
-            <li><b>50-Move Rule:</b> Tidak ada pion yang maju atau bidak yang dimakan selama 50 langkah.</li>
-        </ul>
-    </div>
+    <script>
+        var board = null;
+        var game = new Chess();
+        var $status = $('#status');
+        var $history = $('#history');
 
-</div>
+        function onDragStart (source, piece, position, orientation) {
+            // Jangan jalan jika game sudah selesai
+            if (game.game_over()) return false;
 
-<footer>
-    <p>&copy; 2026 Chess Trainer AI - Mari Berpikir Strategis.</p>
-</footer>
+            // Hanya boleh gerakkan bidak sesuai giliran
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        }
 
-<script>
-    function showSection(id) {
-        // Sembunyikan semua card
-        document.querySelectorAll('.card').forEach(card => {
-            card.classList.remove('active');
-        });
-        // Tampilkan yang dipilih
-        document.getElementById(id).classList.add('active');
-    }
-</script>
+        function onDrop (source, target) {
+            // Cek apakah langkah legal
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // otomatis jadi menteri kalau sampai ujung
+            });
 
+            // Jika ilegal, kembalikan bidak
+            if (move === null) return 'snapback';
+
+            updateStatus();
+        }
+
+        function updateStatus () {
+            var status = '';
+            var moveColor = (game.turn() === 'w') ? 'Putih' : 'Hitam';
+
+            if (game.in_checkmate()) {
+                status = 'Game Over, ' + moveColor + ' kena Skakmat!';
+            } else if (game.in_draw()) {
+                status = 'Game Over, Hasil DRAW (Remis/Stalemate)';
+            } else {
+                status = moveColor + ' melangkah';
+                if (game.in_check()) {
+                    status += ', sedang DISKAK!';
+                }
+            }
+
+            $status.html(status);
+            $history.html(game.pgn());
+        }
+
+        function loadOpening(type) {
+            game.reset();
+            if (type === 'Ruy Lopez') {
+                game.move('e4'); game.move('e5'); game.move('Nf3'); game.move('Nc6'); game.move('Bb5');
+            } else if (type === 'Sicilian') {
+                game.move('e4'); game.move('c5');
+            } else if (type === 'Queens Gambit') {
+                game.move('d4'); game.move('d5'); game.move('c4');
+            }
+            board.position(game.fen());
+            updateStatus();
+        }
+
+        function resetGame() {
+            game.reset();
+            board.start();
+            updateStatus();
+        }
+
+        var config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+        };
+        board = Chessboard('myBoard', config);
+
+        updateStatus();
+    </script>
 </body>
 </html>
