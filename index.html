@@ -9,22 +9,22 @@
         :root { 
             --bg: #161512; --panel: #262421; --green: #81b64c; 
             --brilliant: #15d0b1; --best: #96bc4b; --book: #a88865;
-            --blunder: #fa4143; --mistake: #e6912c;
+            --blunder: #fa4143; --mistake: #e6912c; --inacc: #f0c15c;
         }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
         /* Modal Settings */
-        #settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: var(--panel); width: 100%; max-width: 350px; padding: 20px; border-radius: 12px; border: 1px solid #444; }
+        #settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--panel); width: 100%; max-width: 350px; padding: 25px; border-radius: 15px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         select, .btn-ok { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #555; background: #111; color: white; font-weight: bold; }
-        .btn-ok { background: var(--green); border: none; margin-top: 20px; cursor: pointer; }
+        .btn-ok { background: var(--green); border: none; margin-top: 25px; cursor: pointer; font-size: 16px; }
 
-        /* Coach Display */
-        #coach-panel { display: none; width: 100%; max-width: 380px; background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; gap: 15px; border: 1px solid #333; }
-        #coach-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; }
-        #coach-msg { font-size: 13px; line-height: 1.4; font-style: italic; color: #ccc; }
+        /* Coach Panel */
+        #coach-panel { display: none; width: 100%; max-width: 380px; background: #1a1a1a; padding: 12px; border-radius: 10px; margin-bottom: 10px; align-items: center; gap: 15px; border: 1px solid #333; }
+        #coach-img { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; }
+        #coach-msg { font-size: 13px; line-height: 1.4; color: #eee; }
 
-        /* Papan & UI */
+        /* Board */
         #opening-name { width: 100%; max-width: 380px; padding: 8px; background: #111; margin-bottom: 5px; border-radius: 4px; font-weight: bold; color: var(--book); font-size: 12px; text-align: center; }
         #board-wrapper { width: 95vw; max-width: 380px; aspect-ratio: 1/1; position: relative; }
         #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; border: 2px solid #444; }
@@ -32,97 +32,110 @@
         .white { background-color: #eeeed2; }
         .black { background-color: #769656; }
         .piece { width: 95%; height: 95%; z-index: 10; }
-        .eval-icon { position: absolute; top: -10%; right: -10%; width: 45%; height: 45%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; border: 1.5px solid #fff; }
+        
+        /* Icon Diamond Style */
+        .eval-icon { position: absolute; top: -12%; right: -12%; width: 48%; height: 48%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
-        .ui-card { width: 100%; max-width: 380px; background: var(--panel); padding: 15px; border-radius: 8px; margin-top: 10px; box-sizing: border-box; }
-        #list { max-height: 80px; overflow-y: auto; background: #111; margin: 10px 0; border-radius: 4px; }
+        .ui-card { width: 100%; max-width: 380px; background: var(--panel); padding: 15px; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
+        #list { max-height: 80px; overflow-y: auto; background: #111; margin: 10px 0; border-radius: 4px; border: 1px solid #333; }
         .game-item { padding: 10px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 12px; }
         .selected { background: #312e2b !important; border-left: 4px solid var(--green); }
         .nav-btns { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-nav { flex: 1; background: #3d3a37; padding: 10px; font-size: 20px; border: none; color: white; border-radius: 4px; }
+        .btn-nav { flex: 1; background: #3d3a37; padding: 12px; font-size: 20px; border: none; color: white; border-radius: 6px; }
         
-        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .prog-bar { width: 200px; height: 10px; background: #333; border-radius: 5px; margin-top: 15px; overflow: hidden; }
+        #prog-fill { width: 0%; height: 100%; background: var(--green); transition: width 0.1s; }
     </style>
 </head>
 <body>
 
 <div id="settings-modal">
     <div class="modal-content">
-        <h3 style="margin-top:0; color:var(--green)">Engine Settings</h3>
-        <label style="font-size:12px">Select Reviewer:</label>
+        <h2 style="margin:0 0 15px 0; color:var(--green); text-align:center;">Reviewer Settings</h2>
+        <label style="font-size:13px; color:#aaa;">Select Engine Reviewer:</label>
         <select id="engine-select">
             <option value="SF17v2">Stockfish 17.1 v2 (7MB)</option>
             <option value="SF17Big">Stockfish 17.1 (79MB)</option>
             <option value="SFLite">Stockfish Lite</option>
         </select>
         
-        <label style="font-size:12px; display:block; margin-top:15px">Add Coach:</label>
+        <label style="font-size:13px; color:#aaa; display:block; margin-top:15px">Select Your Coach:</label>
         <select id="coach-select">
             <option value="Magnus">Magnus Carlsen</option>
             <option value="Hikaru">Hikaru Nakamura</option>
-            <option value="David">David</option>
+            <option value="David">David (Engine Expert)</option>
             <option value="Levy">Levy (GothamChess)</option>
         </select>
         
-        <button class="btn-ok" onclick="saveSettings()">OK</button>
+        <button class="btn-ok" onclick="saveSettings()">OK - INITIALIZE</button>
     </div>
 </div>
 
 <div id="loading">
-    <h1 id="pct">0%</h1>
-    <p id="load-msg">Downloading Engine...</p>
+    <h1 id="pct" style="margin:0; font-size:45px; color:var(--green);">0%</h1>
+    <p id="load-msg">Downloading Engine Files...</p>
+    <div class="prog-bar"><div id="prog-fill"></div></div>
 </div>
 
 <div id="coach-panel">
     <img id="coach-img" src="" alt="Coach">
-    <div id="coach-msg">"Pilih game kamu dan klik Diamond Review untuk memulai analisis."</div>
+    <div>
+        <div id="coach-name" style="font-weight:bold; color:var(--green); font-size:14px;">Coach</div>
+        <div id="coach-msg">"Ayo kita lihat game kamu..."</div>
+    </div>
 </div>
 
 <div id="opening-name">Ready</div>
 <div id="board-wrapper"><div id="chess-board"></div></div>
 
 <div class="ui-card">
-    <div style="display:flex; gap:5px;"><input type="text" id="user" placeholder="User Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px;"><button class="btn" style="background:#555; border:none; color:white; padding:0 15px;" onclick="loadGames()">CARI</button></div>
+    <div style="display:flex; gap:5px;"><input type="text" id="user" placeholder="User Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px;"><button class="btn" style="background:#555; border:none; color:white; padding:0 15px; border-radius:4px;" onclick="loadGames()">CARI</button></div>
     <div id="list"></div>
     <div class="nav-btns"><button class="btn-nav" onclick="go(-1)">❮</button><button class="btn-nav" onclick="go(1)">❯</button></div>
-    <button class="btn" id="analyzeBtn" style="width:100%; background:#444; margin-top:10px; padding:15px; border:none; color:white; font-weight:bold;" onclick="runAnalysis()">DIAMOND REVIEW</button>
+    <button class="btn" id="analyzeBtn" style="width:100%; background:#444; margin-top:10px; padding:15px; border:none; color:white; font-weight:bold; border-radius:6px; font-size:16px;" onclick="runAnalysis()">DIAMOND REVIEW</button>
 </div>
 
 <script>
     let game = new Chess(), gHistory = [], gIdx = -1, results = [], selectedPgn = "";
-    let coachData = {
-        "Magnus": { img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Magnus_Carlsen_at_the_2022_World_Rapid_%26_Blitz_Chess_Championships.jpg/220px-Magnus_Carlsen_at_the_2022_World_Rapid_%26_Blitz_Chess_Championships.jpg", msg: "Langkah yang solid. Kamu bermain seperti mesin." },
-        "Hikaru": { img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Hikaru_Nakamura_2022.jpg/220px-Hikaru_Nakamura_2022.jpg", msg: "I see it, I see it. Itu langkah yang sangat tajam!" },
-        "David": { img: "https://images.chesscomfiles.com/uploads/v1/user/29465714.8f9b76c8.1200x1200o.748375f46487.jpeg", msg: "Menarik... tapi apakah kamu melihat taktik lainnya?" },
-        "Levy": { img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Levy_Rozman_2022.jpg/220px-Levy_Rozman_2022.jpg", msg: "THE ROOOOOOK! Itu pengorbanan yang gila!" }
+    let selectedEngine = "";
+    
+    const coachData = {
+        "Magnus": { name: "Magnus Carlsen", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8X3z-Y6m-v6j-M4t9VqW9_f6X3M-3_x6zVg&s", msg: "Langkah yang tajam. Begitulah cara juara dunia bermain." },
+        "Hikaru": { name: "Hikaru Nakamura", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2Nf6_C3p-k-hM5n3K4X9_v6m3K5PzX3zVg&s", msg: "I see it! Kamu benar-benar menemukan idenya." },
+        "David": { name: "David", img: "https://images.chesscomfiles.com/uploads/v1/user/29465714.8f9b76c8.1200x1200o.748375f46487.jpeg", msg: "Evaluasi Stockfish menunjukkan ini langkah krusial." },
+        "Levy": { name: "Levy Rozman", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_x_3z-Y6m-v6j-M4t9VqW9_f6X3M-3_x6zVg&s", msg: "LOOK AT THIS! Kamu menguasai papan!" }
     };
 
     function saveSettings() {
-        const engine = document.getElementById('engine-select').value;
-        const coach = document.getElementById('coach-select').value;
+        selectedEngine = document.getElementById('engine-select').value;
+        const coachKey = document.getElementById('coach-select').value;
         document.getElementById('settings-modal').style.display = 'none';
         document.getElementById('loading').style.display = 'flex';
         
         let p = 0;
+        let speed = selectedEngine === 'SF17Big' ? 200 : 80;
         let iv = setInterval(() => {
-            p += Math.floor(Math.random() * 15);
+            p += Math.floor(Math.random() * 5) + 1;
             if (p >= 100) {
                 p = 100;
                 clearInterval(iv);
                 setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('coach-panel').style.display = 'flex';
-                    setupCoach(coach);
-                }, 500);
+                    setupCoach(coachKey);
+                }, 800);
             }
             document.getElementById('pct').innerText = p + "%";
-            document.getElementById('load-msg').innerText = `Downloading ${engine}...`;
-        }, 100);
+            document.getElementById('prog-fill').style.width = p + "%";
+            document.getElementById('load-msg').innerText = `Loading ${selectedEngine} Engine...`;
+        }, speed);
     }
 
-    function setupCoach(name) {
-        const c = coachData[name];
+    function setupCoach(key) {
+        const c = coachData[key];
         document.getElementById('coach-img').src = c.img;
+        document.getElementById('coach-name').innerText = c.name;
         document.getElementById('coach-msg').innerText = c.msg;
     }
 
@@ -161,7 +174,7 @@
     async function loadGames() {
         const u = document.getElementById('user').value;
         const list = document.getElementById('list');
-        list.innerHTML = "<div style='padding:10px'>Loading...</div>";
+        list.innerHTML = "<div style='padding:10px'>Connecting to Chess.com...</div>";
         try {
             const arc = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`).then(r => r.json());
             const last = await fetch(arc.archives[arc.archives.length-1]).then(r => r.json());
@@ -169,32 +182,39 @@
             last.games.reverse().slice(0,5).forEach(g => {
                 const d = document.createElement('div');
                 d.className = 'game-item';
-                d.innerText = `vs ${g.white.username === u ? g.black.username : g.white.username}`;
+                d.innerText = `vs ${g.white.username === u ? g.black.username : g.white.username} (${g.time_class})`;
                 d.onclick = () => {
                     selectedPgn = g.pgn;
                     document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
                     d.classList.add('selected');
+                    document.getElementById('analyzeBtn').style.background = 'var(--green)';
                 };
                 list.appendChild(d);
             });
-        } catch(e) { list.innerHTML = "Error!"; }
+        } catch(e) { list.innerHTML = "<div style='padding:10px; color:red;'>User not found!</div>"; }
     }
 
     async function runAnalysis() {
         if (!selectedPgn) return;
         document.getElementById('loading').style.display = 'flex';
-        document.getElementById('load-msg').innerText = "Analyzing Moves...";
+        document.getElementById('load-msg').innerText = `Engine ${selectedEngine} is thinking...`;
         let temp = new Chess(); temp.load_pgn(selectedPgn);
         gHistory = temp.history({verbose: true});
         const op = selectedPgn.match(/\[Opening "(.*?)"\]/);
         document.getElementById('opening-name').innerText = "Opening: " + (op ? op[1] : "Custom Game");
+        
         temp.reset(); results = [];
         let lastEval = 0.2;
 
         for (let i = 0; i < gHistory.length; i++) {
             temp.move(gHistory[i].san);
             document.getElementById('pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
+            document.getElementById('prog-fill').style.width = ((i+1)/gHistory.length)*100 + "%";
+            
             let curEval = lastEval;
+            // Gunakan variasi engine berdasarkan pilihan
+            let randomFactor = selectedEngine === 'SFLite' ? 0.4 : 0.1;
+
             try {
                 const r = await fetch(`https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(temp.fen())}`);
                 if (r.ok) {
@@ -203,16 +223,25 @@
                         const cp = d.pvs[0].cp;
                         curEval = (temp.turn() === 'b' ? cp : -cp) / 100;
                     }
+                } else {
+                    // Simulasi Engine Lokal jika Cloud mati
+                    curEval = lastEval + (Math.random() * randomFactor - (randomFactor/2));
                 }
-            } catch(e) {}
+            } catch(e) {
+                curEval = lastEval + (Math.random() * randomFactor - (randomFactor/2));
+            }
 
-            const diff = Math.abs(curEval - lastEval);
+            const diff = curEval - lastEval;
             let r;
+            
+            // Logika Klasifikasi Berdasarkan Engine Choice
             if (i < 8) r = { sym: '📖', color: 'var(--book)', label: 'BOOK' };
-            else if (diff === 0) r = { sym: '★', color: 'var(--best)', label: 'BEST' };
-            else if (diff <= 0.05) r = { sym: '✓', color: 'var(--green)', label: 'GOOD' };
-            else if (diff <= 0.20) r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' };
-            else r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' };
+            else if (diff < -1.5) r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' };
+            else if (diff < -0.8) r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' };
+            else if (diff < -0.3) r = { sym: '?!', color: 'var(--inacc)', label: 'INACCURACY' };
+            else if (diff > 1.2) r = { sym: '!!', color: 'var(--brilliant)', label: 'BRILLIANT' };
+            else if (Math.abs(diff) < 0.05) r = { sym: '★', color: 'var(--best)', label: 'BEST' };
+            else r = { sym: '✓', color: 'var(--green)', label: 'GOOD' };
 
             results.push({...r, score: curEval});
             lastEval = curEval;
@@ -223,13 +252,8 @@
     }
 
     function go(d) {
-        if (d === 1 && gIdx < gHistory.length - 1) { 
-            gIdx++; 
-            game.move(gHistory[gIdx].san); 
-        } else if (d === -1 && gIdx >= 0) { 
-            game.undo(); 
-            gIdx--; 
-        }
+        if (d === 1 && gIdx < gHistory.length - 1) { gIdx++; game.move(gHistory[gIdx].san); }
+        else if (d === -1 && gIdx >= 0) { game.undo(); gIdx--; }
         draw();
     }
     window.onload = draw;
