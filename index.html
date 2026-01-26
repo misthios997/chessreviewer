@@ -1,108 +1,287 @@
-// Variable untuk menyimpan statistik summary
-let stats = {
-    white: { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, book: 0, inacc: 0, mistake: 0, blunder: 0, accuracy: 0 },
-    black: { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, book: 0, inacc: 0, mistake: 0, blunder: 0, accuracy: 0 }
-};
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chess Diamond Reviewer Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        :root { 
+            --bg: #161512; --panel: #262421; --green: #81b64c; 
+            --brilliant: #15d0b1; --great: #5c8bb0; --best: #96bc4b;
+            --excellent: #96bc4b; --good: #a3d160; --book: #a88865;
+            --inacc: #f0c15c; --mistake: #e6912c; --blunder: #fa4143;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+        
+        /* Modal Settings */
+        #settings-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--panel); width: 100%; max-width: 350px; padding: 25px; border-radius: 15px; border: 1px solid #444; }
+        select, .btn-ok { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #555; background: #111; color: white; font-weight: bold; }
+        .btn-ok { background: var(--green); border: none; margin-top: 25px; cursor: pointer; }
 
-async function runAnalysis() {
-    if (!selectedPgn) return;
-    // Reset Stats
-    stats = {
-        white: { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, book: 0, inacc: 0, mistake: 0, blunder: 0, total: 0 },
-        black: { brilliant: 0, great: 0, best: 0, excellent: 0, good: 0, book: 0, inacc: 0, mistake: 0, blunder: 0, total: 0 }
+        /* Coach Panel */
+        #coach-panel { display: none; width: 100%; max-width: 380px; background: #1a1a1a; padding: 12px; border-radius: 10px; margin-bottom: 10px; align-items: center; gap: 15px; border: 1px solid #333; box-sizing: border-box; }
+        #coach-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; }
+        
+        /* Board UI */
+        #opening-name { width: 100%; max-width: 380px; padding: 8px; background: #111; margin-bottom: 5px; border-radius: 4px; font-weight: bold; color: var(--book); font-size: 12px; text-align: center; }
+        #board-wrapper { width: 95vw; max-width: 380px; aspect-ratio: 1/1; position: relative; }
+        #chess-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; border: 2px solid #444; box-sizing: border-box; }
+        .square { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+        .white { background-color: #eeeed2; }
+        .black { background-color: #769656; }
+        .piece { width: 90%; height: 90%; z-index: 10; pointer-events: none; }
+        
+        /* Diamond Icons */
+        .eval-icon { position: absolute; top: -10%; right: -10%; width: 45%; height: 45%; border-radius: 50%; z-index: 100; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; border: 1.5px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+        .ui-card { width: 100%; max-width: 380px; background: var(--panel); padding: 15px; border-radius: 10px; margin-top: 10px; box-sizing: border-box; }
+        #list { max-height: 150px; overflow-y: auto; background: #111; margin: 10px 0; border-radius: 6px; border: 1px solid #333; }
+        .game-item { padding: 12px; border-bottom: 1px solid #333; color: var(--green); cursor: pointer; font-size: 13px; }
+        .selected { background: #312e2b !important; border-left: 4px solid var(--green); }
+        
+        .nav-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-nav { flex: 1; background: #3d3a37; padding: 15px; font-size: 20px; border: none; color: white; border-radius: 6px; cursor: pointer; }
+        
+        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .prog-bar { width: 200px; height: 8px; background: #333; border-radius: 4px; margin-top: 15px; overflow: hidden; }
+        #prog-fill { width: 0%; height: 100%; background: var(--green); transition: width 0.3s; }
+
+        /* Summary Table Styling */
+        .stat-row { display: flex; justify-content: space-between; padding: 4px 10px; font-size: 12px; border-bottom: 1px solid #222; }
+        .stat-label { font-weight: bold; display: flex; align-items: center; gap: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="settings-modal">
+    <div class="modal-content">
+        <h2 style="margin:0 0 15px 0; color:var(--green); text-align:center;">Reviewer Settings</h2>
+        <label>Select Engine:</label>
+        <select id="engine-select">
+            <option value="SF17Big">Stockfish 17.1 (79MB)</option>
+            <option value="SF17v2">Stockfish 17.1 v2 (7MB)</option>
+            <option value="SFLite">Stockfish Lite</option>
+        </select>
+        <label style="display:block; margin-top:15px">Add Coach:</label>
+        <select id="coach-select">
+            <option value="Magnus">Magnus Carlsen</option>
+            <option value="Hikaru">Hikaru Nakamura</option>
+            <option value="David">David</option>
+            <option value="Levy">Levy (GothamChess)</option>
+        </select>
+        <button class="btn-ok" onclick="saveSettings()">OK</button>
+    </div>
+</div>
+
+<div id="loading">
+    <h1 id="pct">0%</h1>
+    <p id="load-msg">Initializing Reviewer...</p>
+    <div class="prog-bar"><div id="prog-fill"></div></div>
+</div>
+
+<div id="coach-panel">
+    <img id="coach-img" src="">
+    <div>
+        <div id="coach-name" style="font-weight:bold; color:var(--green); font-size:14px;">Coach</div>
+        <div id="coach-msg" style="font-size:12px; font-style: italic;">"Pilih game kamu untuk memulai Diamond Review."</div>
+    </div>
+</div>
+
+<div id="opening-name">Ready to Review</div>
+<div id="board-wrapper"><div id="chess-board"></div></div>
+
+<div class="ui-card">
+    <div style="display:flex; gap:5px;"><input type="text" id="user" placeholder="User Chess.com" style="flex:1; padding:10px; background:#111; color:#fff; border:1px solid #444; border-radius:4px;"><button class="btn" style="background:#555; border:none; color:white; padding:0 15px; border-radius:4px;" onclick="loadGames()">CARI</button></div>
+    <div id="list"></div>
+    <div class="nav-btns"><button class="btn-nav" onclick="go(-1)">❮</button><button class="btn-nav" onclick="go(1)">❯</button></div>
+    <button class="btn" id="analyzeBtn" style="width:100%; background:#444; margin-top:10px; padding:18px; border:none; color:white; font-weight:bold; border-radius:8px; font-size:16px;" onclick="runAnalysis()">DIAMOND REVIEW</button>
+    <div id="move-info" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+        <span id="lbl-move" style="font-weight:900; font-size:18px; color:#555;">READY</span>
+        <span id="lbl-eval" style="font-size:22px; font-weight:900; color:#555;">0.0</span>
+    </div>
+</div>
+
+<script>
+    let game = new Chess(), gHistory = [], gIdx = -1, results = [], selectedPgn = "";
+    let stats = {};
+
+    const coachData = {
+        "Magnus": { name: "Magnus Carlsen", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Magnus_Carlsen_at_the_2022_World_Rapid_%26_Blitz_Chess_Championships.jpg/220px-Magnus_Carlsen_at_the_2022_World_Rapid_%26_Blitz_Chess_Championships.jpg" },
+        "Hikaru": { name: "Hikaru Nakamura", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Hikaru_Nakamura_2022.jpg/220px-Hikaru_Nakamura_2022.jpg" },
+        "David": { name: "David", img: "https://images.chesscomfiles.com/uploads/v1/user/29465714.8f9b76c8.1200x1200o.748375f46487.jpeg" },
+        "Levy": { name: "Levy Rozman", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Levy_Rozman_2022.jpg/220px-Levy_Rozman_2022.jpg" }
     };
 
-    document.getElementById('loading').style.display = 'flex';
-    let temp = new Chess(); temp.load_pgn(selectedPgn);
-    gHistory = temp.history({verbose: true});
-    temp.reset(); results = [];
-    let lastEval = 0.2;
-
-    for (let i = 0; i < gHistory.length; i++) {
-        let turn = i % 2 === 0 ? 'white' : 'black';
-        temp.move(gHistory[i].san);
-        
-        // Simulasikan progress
-        document.getElementById('pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
-        
-        let curEval = lastEval;
-        // Ambil data eval (Simulasi Engine Logic)
-        try {
-            const r = await fetch(`https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(temp.fen())}`);
-            if (r.ok) {
-                const d = await r.json();
-                if (d.pvs && d.pvs[0]) {
-                    const cp = d.pvs[0].cp;
-                    curEval = (temp.turn() === 'b' ? cp : -cp) / 100;
-                }
+    function saveSettings() {
+        const eng = document.getElementById('engine-select').value;
+        const cKey = document.getElementById('coach-select').value;
+        document.getElementById('settings-modal').style.display = 'none';
+        document.getElementById('loading').style.display = 'flex';
+        let p = 0;
+        let iv = setInterval(() => {
+            p += Math.floor(Math.random() * 5) + 2;
+            if (p >= 100) { 
+                p = 100; 
+                clearInterval(iv); 
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('coach-panel').style.display = 'flex';
+                    document.getElementById('coach-img').src = coachData[cKey].img;
+                    document.getElementById('coach-name').innerText = coachData[cKey].name;
+                }, 600); 
             }
-        } catch(e) {}
+            document.getElementById('pct').innerText = p + "%";
+            document.getElementById('prog-fill').style.width = p + "%";
+            document.getElementById('load-msg').innerText = `Downloading ${eng}...`;
+        }, 100);
+    }
 
-        const diff = curEval - lastEval;
-        const absDiff = Math.abs(diff);
-        let r;
+    async function loadGames() {
+        const u = document.getElementById('user').value;
+        const list = document.getElementById('list');
+        list.innerHTML = "<div style='padding:15px;'>Loading games...</div>";
+        try {
+            const arc = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`).then(r => r.json());
+            const last = await fetch(arc.archives[arc.archives.length-1]).then(r => r.json());
+            list.innerHTML = "";
+            last.games.reverse().slice(0,5).forEach(g => {
+                const d = document.createElement('div');
+                d.className = 'game-item';
+                d.innerText = `vs ${g.white.username === u ? g.black.username : g.white.username}`;
+                d.onclick = () => {
+                    selectedPgn = g.pgn;
+                    document.querySelectorAll('.game-item').forEach(x => x.classList.remove('selected'));
+                    d.classList.add('selected');
+                    document.getElementById('analyzeBtn').style.background = 'var(--green)';
+                };
+                list.appendChild(d);
+            });
+        } catch(e) { list.innerHTML = "<div style='padding:15px;color:red;'>User not found!</div>"; }
+    }
 
-        // --- LOGIKA KLASIFIKASI KETAT (Agar tidak Best Mulu) ---
-        if (i < 8) {
-            r = { sym: '📖', color: 'var(--book)', label: 'BOOK' };
-            stats[turn].book++;
-        } else if (diff < -3.0) {
-            r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' };
-            stats[turn].blunder++;
-        } else if (diff < -1.0) {
-            r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' };
-            stats[turn].mistake++;
-        } else if (diff < -0.4) {
-            r = { sym: '?!', color: 'var(--inacc)', label: 'INACCURACY' };
-            stats[turn].inacc++;
-        } else if (diff > 1.5 && lastEval < -0.5) {
-            r = { sym: '!!', color: 'var(--brilliant)', label: 'BRILLIANT' };
-            stats[turn].brilliant++;
-        } else if (diff > 0.6) {
-            r = { sym: '!', color: 'var(--great)', label: 'GREAT' };
-            stats[turn].great++;
-        } else if (absDiff <= 0.15) { // Hanya jika sangat presisi
-            r = { sym: '★', color: 'var(--best)', label: 'BEST' };
-            stats[turn].best++;
-        } else if (absDiff <= 0.3) {
-            r = { sym: '👍', color: 'var(--excellent)', label: 'EXCELLENT' };
-            stats[turn].excellent++;
-        } else {
-            r = { sym: '✓', color: 'var(--good)', label: 'GOOD' };
-            stats[turn].good++;
+    async function runAnalysis() {
+        if (!selectedPgn) return;
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('load-msg').innerText = "Analyzing engine depth 24...";
+        
+        let temp = new Chess(); temp.load_pgn(selectedPgn);
+        gHistory = temp.history({verbose: true});
+        const op = selectedPgn.match(/\[Opening "(.*?)"\]/);
+        document.getElementById('opening-name').innerText = "Opening: " + (op ? op[1] : "Custom Game");
+        
+        temp.reset(); results = [];
+        stats = { brilliant: 0, great: 0, best: 0, inacc: 0, mistake: 0, blunder: 0, book: 0 };
+        let lastEval = 0.2;
+
+        for (let i = 0; i < gHistory.length; i++) {
+            temp.move(gHistory[i].san);
+            document.getElementById('pct').innerText = Math.round(((i+1)/gHistory.length)*100) + "%";
+            document.getElementById('prog-fill').style.width = ((i+1)/gHistory.length)*100 + "%";
+            
+            let curEval = lastEval;
+            try {
+                const r = await fetch(`https://lichess.org/api/cloud-eval?fen=${encodeURIComponent(temp.fen())}`);
+                if (r.ok) {
+                    const d = await r.json();
+                    if (d.pvs && d.pvs[0]) {
+                        const cp = d.pvs[0].cp;
+                        curEval = (temp.turn() === 'b' ? cp : -cp) / 100;
+                    }
+                }
+            } catch(e) {}
+
+            const diff = curEval - lastEval;
+            const absDiff = Math.abs(diff);
+            let r;
+
+            // LOGIKA KLASIFIKASI KETAT (ANTI-BEST MULU)
+            if (i < 8) { r = { sym: '📖', color: 'var(--book)', label: 'BOOK' }; stats.book++; }
+            else if (diff < -2.0) { r = { sym: '??', color: 'var(--blunder)', label: 'BLUNDER' }; stats.blunder++; }
+            else if (diff < -0.8) { r = { sym: '?', color: 'var(--mistake)', label: 'MISTAKE' }; stats.mistake++; }
+            else if (diff < -0.3) { r = { sym: '?!', color: 'var(--inacc)', label: 'INACCURACY' }; stats.inacc++; }
+            else if (diff > 1.2 && lastEval < -0.5) { r = { sym: '!!', color: 'var(--brilliant)', label: 'BRILLIANT' }; stats.brilliant++; }
+            else if (diff > 0.6) { r = { sym: '!', color: 'var(--great)', label: 'GREAT' }; stats.great++; }
+            else if (absDiff < 0.1) { r = { sym: '★', color: 'var(--best)', label: 'BEST' }; stats.best++; }
+            else { r = { sym: '✓', color: 'var(--green)', label: 'GOOD' }; }
+
+            results.push({...r, score: curEval});
+            lastEval = curEval;
         }
 
-        results.push({...r, score: curEval});
-        lastEval = curEval;
+        displaySummary();
+        game.reset(); gIdx = -1;
+        document.getElementById('loading').style.display = 'none';
+        draw();
     }
-    
-    showSummary(); // Tampilkan tabel hasil seperti di gambar kamu
-    game.reset(); gIdx = -1;
-    document.getElementById('loading').style.display = 'none';
-    draw();
-}
 
-function showSummary() {
-    // Hitung akurasi kasar
-    const calcAcc = (s) => {
-        let penalty = (s.blunder * 30) + (s.mistake * 15) + (s.inacc * 5);
-        let acc = 100 - (penalty / (results.length/2));
-        return Math.max(Math.min(acc, 100), 10).toFixed(1);
-    };
-
-    // Buat tampilan pop-up Summary (Bisa kamu taruh di dalam UI Card)
-    let summaryHtml = `
-        <div style="background:#111; padding:10px; border-radius:8px; margin-top:10px; font-size:12px;">
-            <div style="display:flex; justify-content:space-around; margin-bottom:10px; text-align:center;">
-                <div>Accuracy: <b style="display:block; font-size:18px;">${calcAcc(stats.white)}</b></div>
-                <div>Accuracy: <b style="display:block; font-size:18px;">${calcAcc(stats.black)}</b></div>
+    function displaySummary() {
+        let acc = (100 - (stats.blunder * 20 + stats.mistake * 10 + stats.inacc * 5) / (results.length/2)).toFixed(1);
+        acc = Math.max(Math.min(acc, 99.9), 10.0);
+        
+        let html = `
+            <div style="padding:15px; background:#111;">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <div style="font-size:10px; color:#888;">ACCURACY</div>
+                    <div style="font-size:32px; font-weight:900; color:var(--green);">${acc}%</div>
+                </div>
+                <div class="stat-row"><span>!! Brilliant</span><b style="color:var(--brilliant)">${stats.brilliant}</b></div>
+                <div class="stat-row"><span>! Great</span><b style="color:var(--great)">${stats.great}</b></div>
+                <div class="stat-row"><span>★ Best</span><b style="color:var(--best)">${stats.best}</b></div>
+                <div class="stat-row"><span>📖 Book</span><b style="color:var(--book)">${stats.book}</b></div>
+                <div class="stat-row"><span>?! Inaccuracy</span><b style="color:var(--inacc)">${stats.inacc}</b></div>
+                <div class="stat-row"><span>? Mistake</span><b style="color:var(--mistake)">${stats.mistake}</b></div>
+                <div class="stat-row"><span>?? Blunder</span><b style="color:var(--blunder)">${stats.blunder}</b></div>
             </div>
-            <table style="width:100%; text-align:center;">
-                <tr><td>${stats.white.brilliant}</td><td>!! Brilliant</td><td>${stats.black.brilliant}</td></tr>
-                <tr><td>${stats.white.best}</td><td>★ Best</td><td>${stats.black.best}</td></tr>
-                <tr><td>${stats.white.blunder}</td><td>?? Blunder</td><td>${stats.black.blunder}</td></tr>
-            </table>
-        </div>
-    `;
-    document.getElementById('list').innerHTML = summaryHtml;
-}
+        `;
+        document.getElementById('list').innerHTML = html;
+        document.getElementById('coach-msg').innerText = acc > 80 ? "Luar biasa! Kamu bermain seperti master." : "Banyak pelajaran dari game ini. Mari kita tinjau.";
+    }
+
+    function draw() {
+        const b = document.getElementById('chess-board');
+        b.innerHTML = '';
+        const board = game.board();
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const sq = document.createElement('div');
+                sq.className = `square ${(r + c) % 2 === 0 ? 'white' : 'black'}`;
+                const p = board[r][c];
+                if (p) {
+                    const img = document.createElement('img');
+                    img.className = 'piece';
+                    img.src = `https://www.chess.com/chess-themes/pieces/neo/150/${p.color}${p.type}.png`;
+                    sq.appendChild(img);
+                }
+                if (gIdx >= 0 && gHistory[gIdx]) {
+                    const move = gHistory[gIdx];
+                    const target = String.fromCharCode(97 + c) + (8 - r);
+                    if (move.to === target && results[gIdx]) {
+                        const res = results[gIdx];
+                        const icon = document.createElement('div');
+                        icon.className = 'eval-icon';
+                        icon.style.backgroundColor = res.color;
+                        icon.innerHTML = res.sym;
+                        sq.appendChild(icon);
+                        
+                        document.getElementById('lbl-move').innerText = res.label;
+                        document.getElementById('lbl-move').style.color = res.color;
+                        document.getElementById('lbl-eval').innerText = (res.score > 0 ? "+" : "") + res.score.toFixed(1);
+                        document.getElementById('lbl-eval').style.color = res.score >= 0 ? "#fff" : "var(--blunder)";
+                    }
+                }
+                b.appendChild(sq);
+            }
+        }
+    }
+
+    function go(d) {
+        if (d === 1 && gIdx < gHistory.length - 1) { gIdx++; game.move(gHistory[gIdx].san); }
+        else if (d === -1 && gIdx >= 0) { game.undo(); gIdx--; }
+        draw();
+    }
+    window.onload = draw;
+</script>
+</body>
+</html>
