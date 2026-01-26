@@ -11,46 +11,40 @@
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     
     <style>
-        body { 
-            background-color: #312e2b; 
-            color: #fff; 
-            font-family: sans-serif; 
-            touch-action: manipulation; 
-            overflow: hidden; /* Mencegah scroll seluruh halaman */
-        }
+        body { background-color: #312e2b; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
         .bg-chess-dark { background-color: #262421; }
         .bg-chess-button { background-color: #454241; }
         .bg-chess-green { background-color: #81b64c; }
-        #mainBoard { width: 100vw; max-width: 450px; margin: 0 auto; touch-action: none; }
-        .active-side { border: 3px solid #81b64c !important; background: #3d3a37; }
-        .scrollable { overflow-y: auto; max-height: 80vh; }
+        .active-side { border: 3px solid #81b64c !important; }
+        #mainBoard { width: 95vw; max-width: 450px; margin: 0 auto; }
+        .scroll-v { overflow-y: auto; max-height: 85vh; padding-bottom: 50px; }
     </style>
 </head>
 <body>
 
 <div id="screen-menu" class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 class="text-4xl font-extrabold mb-10 text-white italic tracking-tighter">PRACTICE CHESS</h1>
+    <h1 class="text-4xl font-black mb-10 italic tracking-tighter">PRACTICE CHESS</h1>
     <div class="grid grid-cols-1 gap-4 w-full max-w-xs">
         <button onclick="showSection('screen-setup')" class="bg-chess-green py-5 rounded-xl font-bold text-xl shadow-lg active:scale-95 transition-all">Play Bot</button>
-        <button onclick="showSection('screen-training')" class="bg-chess-button py-4 rounded-xl font-semibold">Training</button>
+        <button onclick="showSection('screen-training')" class="bg-chess-button py-4 rounded-xl font-semibold active:scale-95">Training</button>
         <button class="bg-chess-button opacity-50 py-4 rounded-xl font-semibold cursor-not-allowed">Game Review</button>
-        <button onclick="showSection('screen-history')" class="bg-chess-button py-4 rounded-xl font-semibold">History</button>
+        <button class="bg-chess-button py-4 rounded-xl font-semibold">History</button>
     </div>
 </div>
 
 <div id="screen-setup" class="hidden min-h-screen p-4 flex flex-col">
     <button onclick="showSection('screen-menu')" class="mb-4 text-gray-400">← Kembali</button>
-    <div class="bg-chess-dark p-6 rounded-2xl shadow-2xl overflow-y-auto">
-        <h2 class="text-xl font-bold mb-6 text-center text-gray-300 tracking-widest uppercase">Game Settings</h2>
+    <div class="bg-chess-dark p-6 rounded-2xl shadow-2xl flex-1 overflow-y-auto">
+        <h2 class="text-xl font-bold mb-6 text-center text-gray-300">GAME SETTINGS</h2>
         
-        <div class="space-y-4">
+        <div class="space-y-5">
             <div>
                 <label class="text-xs text-gray-400 uppercase">Pilih Bot</label>
-                <select id="bot-config" class="w-full bg-[#3d3a37] p-3 rounded-lg mt-1 outline-none">
+                <select id="bot-config" class="w-full bg-[#3d3a37] p-3 rounded-lg mt-1 outline-none border border-gray-600">
                     <option value="0|Martin|400">Martin (400)</option>
                     <option value="2|David|700">David (700)</option>
                     <option value="5|Nelson|1200">Nelson (1200)</option>
-                    <option value="8|Levy|1500">Levy (1500)</option>
+                    <option value="10|Levy|1500">Levy (1500)</option>
                     <option value="12|Saint|1850">Saint (1850)</option>
                     <option value="15|Gusein|2250">Gusein (2250)</option>
                     <option value="18|Hikaru|2500">Hikaru (2500)</option>
@@ -69,7 +63,7 @@
 
             <div>
                 <label class="text-xs text-gray-400 uppercase">Timer</label>
-                <select id="timer-config" class="w-full bg-[#3d3a37] p-3 rounded-lg mt-1">
+                <select id="timer-config" class="w-full bg-[#3d3a37] p-3 rounded-lg mt-1 border border-gray-600">
                     <option value="none">None</option>
                     <option value="180">3 Min</option>
                     <option value="300">5 Min</option>
@@ -79,7 +73,7 @@
 
             <div>
                 <label class="text-xs text-gray-400 uppercase">Chess Variant</label>
-                <select id="variant-config" class="w-full bg-[#3d3a37] p-3 rounded-lg mt-1">
+                <select id="variant-config" class="w-full bg-[#3d3a37] p-3 rounded-lg mt-1 border border-gray-600">
                     <option value="standard">Standard</option>
                     <option value="crazyhouse">Crazyhouse</option>
                     <option value="all-rook">All Rook</option>
@@ -90,51 +84,63 @@
                 </select>
             </div>
 
-            <button onclick="initGame()" class="w-full bg-chess-green py-5 rounded-xl font-black text-xl mt-6 shadow-lg uppercase tracking-wider active:scale-95 transition-all">Mulai Main</button>
+            <button onclick="initGame()" class="w-full bg-chess-green py-5 rounded-xl font-black text-xl mt-4 shadow-lg active:scale-95 transition-all">MULAI MAIN</button>
         </div>
     </div>
 </div>
 
-<div id="screen-game" class="hidden h-screen flex flex-col p-2 overflow-hidden">
-    <div class="flex justify-between items-center p-2 bg-[#211f1c] rounded-t-lg">
+<div id="screen-game" class="hidden h-screen flex flex-col p-2 bg-[#312e2b]">
+    <div class="flex justify-between items-center p-2 mb-2 bg-[#262421] rounded">
         <div class="flex items-center gap-2">
             <span id="display-bot-name" class="font-bold">Bot</span>
             <span class="text-[10px] bg-gray-700 px-1 rounded" id="display-bot-elo">400</span>
         </div>
-        <div id="bot-timer" class="bg-black px-2 rounded font-mono text-lg">--:--</div>
+        <div id="bot-timer" class="bg-black px-2 rounded font-mono text-lg">None</div>
     </div>
 
-    <div class="flex-1 flex items-center justify-center bg-chess-dark">
+    <div class="flex-1 flex items-center justify-center">
         <div id="mainBoard"></div>
     </div>
 
-    <div class="flex justify-between items-center p-2 bg-[#211f1c] rounded-b-lg mb-2">
-        <div class="font-bold">You</div>
-        <div id="player-timer" class="bg-black px-2 rounded font-mono text-lg">--:--</div>
+    <div class="flex justify-between items-center p-2 mt-2 bg-[#262421] rounded">
+        <div class="font-bold uppercase tracking-widest text-sm">You</div>
+        <div id="player-timer" class="bg-black px-2 rounded font-mono text-lg">None</div>
     </div>
 
-    <div class="grid grid-cols-3 gap-2 pb-4">
-        <button onclick="undoMove()" class="bg-chess-button py-3 rounded font-bold text-sm">Undo</button>
-        <button class="bg-chess-button py-3 rounded font-bold text-sm opacity-50">Redo</button>
-        <button onclick="location.reload()" class="bg-red-900 py-3 rounded font-bold text-sm">Resign</button>
+    <div class="grid grid-cols-3 gap-2 mt-4 pb-4">
+        <button onclick="game.undo(); game.undo(); board.position(game.fen())" class="bg-chess-button py-3 rounded font-bold">Undo</button>
+        <button class="bg-chess-button py-3 rounded font-bold opacity-50">Redo</button>
+        <button onclick="location.reload()" class="bg-red-900 py-3 rounded font-bold">Resign</button>
     </div>
 </div>
 
-<div id="screen-training" class="hidden p-6 min-h-screen scrollable">
-    <button onclick="showSection('screen-menu')" class="mb-4">← Kembali</button>
-    <h2 class="text-2xl font-bold mb-6">Training Openings</h2>
-    <div class="space-y-4">
-        <div class="bg-chess-dark p-4 rounded-xl border-l-4 border-chess-green" onclick="startTraining('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3')">
-            <h3 class="font-bold">Italian Game</h3>
-            <button class="text-xs text-chess-green mt-2 font-bold uppercase">Latih Sekarang</button>
+<div id="screen-training" class="hidden h-screen p-6 flex flex-col">
+    <button onclick="showSection('screen-menu')" class="mb-4 text-gray-400">← Kembali</button>
+    <h2 class="text-2xl font-black mb-6 italic">TRAINING LIBRARY</h2>
+    <div class="flex-1 scroll-v space-y-4">
+        <div onclick="startTraining('r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3', 'Italian Game')" class="bg-chess-dark p-4 rounded-xl border-l-4 border-chess-green active:bg-gray-800">
+            <h3 class="font-bold text-lg">Italian Game</h3>
+            <p class="text-xs text-gray-400 mt-1">1. e4 e5 2. Nf3 Nc6 3. Bc4</p>
         </div>
-        <div class="bg-chess-dark p-4 rounded-xl border-l-4 border-chess-green" onclick="startTraining('rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2')">
-            <h3 class="font-bold">Queen's Gambit</h3>
-            <button class="text-xs text-chess-green mt-2 font-bold uppercase">Latih Sekarang</button>
+        <div onclick="startTraining('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2', 'Sicilian Defense')" class="bg-chess-dark p-4 rounded-xl border-l-4 border-blue-500 active:bg-gray-800">
+            <h3 class="font-bold text-lg">Sicilian Defense</h3>
+            <p class="text-xs text-gray-400 mt-1">1. e4 c5 - Pertahanan paling populer.</p>
         </div>
-        <div class="bg-chess-dark p-4 rounded-xl border-l-4 border-chess-green" onclick="startTraining('rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2')">
-            <h3 class="font-bold">Alien Gambit</h3>
-            <button class="text-xs text-chess-green mt-2 font-bold uppercase">Latih Sekarang</button>
+        <div onclick="startTraining('rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2', 'Queen\'s Gambit')" class="bg-chess-dark p-4 rounded-xl border-l-4 border-yellow-500 active:bg-gray-800">
+            <h3 class="font-bold text-lg">Queen's Gambit</h3>
+            <p class="text-xs text-gray-400 mt-1">1. d4 d5 2. c4 - Korbankan pion sayap menteri.</p>
+        </div>
+        <div onclick="startTraining('r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3', 'Ruy Lopez')" class="bg-chess-dark p-4 rounded-xl border-l-4 border-red-500 active:bg-gray-800">
+            <h3 class="font-bold text-lg">Ruy Lopez</h3>
+            <p class="text-xs text-gray-400 mt-1">1. e4 e5 2. Nf3 Nc6 3. Bb5</p>
+        </div>
+        <div onclick="startTraining('rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2', 'Alien Gambit')" class="bg-chess-dark p-4 rounded-xl border-l-4 border-purple-500 active:bg-gray-800">
+            <h3 class="font-bold text-lg">Alien Gambit</h3>
+            <p class="text-xs text-gray-400 mt-1">Varian agresif dari pembukaan E4.</p>
+        </div>
+        <div onclick="startTraining('rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2', 'Caro-Kann Defense')" class="bg-chess-dark p-4 rounded-xl border-l-4 border-green-300 active:bg-gray-800">
+            <h3 class="font-bold text-lg">Caro-Kann Defense</h3>
+            <p class="text-xs text-gray-400 mt-1">1. e4 c6 - Solid dan defensif.</p>
         </div>
     </div>
 </div>
@@ -146,13 +152,6 @@
     let stockfish = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
     let skillLevel = 0;
 
-    // Prevent body scrolling while dragging pieces
-    document.addEventListener('touchmove', function(e) {
-        if (e.target.closest('#mainBoard')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
     function showSection(id) {
         document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
@@ -160,20 +159,20 @@
 
     function setSide(s) {
         playerSide = s;
-        document.getElementById('side-w').classList.toggle('active-side', s === 'w');
-        document.getElementById('side-b').classList.toggle('active-side', s === 'b');
+        $('#side-w, #side-b').removeClass('active-side');
+        $(`#side-${s}`).addClass('active-side');
     }
 
     function onDrop(source, target) {
         let move = game.move({ from: source, to: target, promotion: 'q' });
         if (move === null) return 'snapback';
-        window.setTimeout(makeEngineMove, 400);
+        window.setTimeout(makeEngineMove, 300);
     }
 
     function makeEngineMove() {
         if (game.game_over()) return;
         stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage(`go depth ${skillLevel + 5}`);
+        stockfish.postMessage(`go depth ${skillLevel + 4}`);
         
         stockfish.onmessage = function(e) {
             if (e.data.startsWith('bestmove')) {
@@ -185,15 +184,17 @@
     }
 
     function initGame() {
-        const botData = document.getElementById('bot-config').value.split('|');
-        skillLevel = parseInt(botData[0]);
-        document.getElementById('display-bot-name').innerText = botData[1];
-        document.getElementById('display-bot-elo').innerText = botData[2];
+        const botVal = $('#bot-config').val().split('|');
+        skillLevel = parseInt(botVal[0]);
+        $('#display-bot-name').text(botVal[1]);
+        $('#display-bot-elo').text(botVal[2]);
+        
+        const timerVal = $('#timer-config').val();
+        $('#player-timer, #bot-timer').text(timerVal === 'none' ? 'None' : (timerVal/60) + ':00');
 
         game = new Chess();
-        const variant = document.getElementById('variant-config').value;
+        const variant = $('#variant-config').val();
         
-        // FEN Logic for Variants
         if(variant === 'all-queen') game.load('qqqqkqqq/pppppppp/8/8/8/8/PPPPPPPP/QQQQKQQQ w KQkq - 0 1');
         if(variant === 'all-rook') game.load('rrrrkrrr/pppppppp/8/8/8/8/PPPPPPPP/RRRRKRRR w KQkq - 0 1');
         if(variant === 'all-knight') game.load('nnnnknnn/pppppppp/8/8/8/8/PPPPPPPP/NNNNKNNN w KQkq - 0 1');
@@ -201,33 +202,36 @@
 
         showSection('screen-game');
         
-        board = Chessboard('mainBoard', {
-            draggable: true,
-            position: game.fen(),
-            orientation: playerSide === 'w' ? 'white' : 'black',
-            onDrop: onDrop,
-            onSnapEnd: () => board.position(game.fen()),
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-        });
+        // Timeout agar render board tidak crash dengan transisi screen
+        setTimeout(() => {
+            board = Chessboard('mainBoard', {
+                draggable: true,
+                position: game.fen(),
+                orientation: playerSide === 'w' ? 'white' : 'black',
+                onDrop: onDrop,
+                onSnapEnd: () => board.position(game.fen()),
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
 
-        if (playerSide === 'b') window.setTimeout(makeEngineMove, 500);
+            if (playerSide === 'b') makeEngineMove();
+        }, 100);
     }
 
-    function undoMove() {
-        game.undo(); game.undo();
-        board.position(game.fen());
-    }
-
-    function startTraining(fen) {
-        game = new Chess(fen);
+    function startTraining(fen, name) {
         playerSide = 'w';
+        game = new Chess(fen);
+        $('#display-bot-name').text("Training: " + name);
+        $('#display-bot-elo').text("INFO");
         showSection('screen-game');
-        board = Chessboard('mainBoard', {
-            draggable: true,
-            position: game.fen(),
-            onDrop: onDrop,
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-        });
+        
+        setTimeout(() => {
+            board = Chessboard('mainBoard', {
+                draggable: true,
+                position: fen,
+                onDrop: onDrop,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+        }, 100);
     }
 </script>
 </body>
