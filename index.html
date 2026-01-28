@@ -3,109 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChessReps Ultimate Academy</title>
+    <title>ChessReps Ultimate - Fix Edition</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --bg: #161512; --card: #262421; --accent: #81b64c; --text: #bababa; --neo-l: #ebecd0; --neo-d: #779556; }
+        :root { --bg: #161512; --card: #262421; --accent: #81b64c; --neo-l: #ebecd0; --neo-d: #779556; }
         body, html { background-color: var(--bg); color: white; margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .screen { display: none; height: 100vh; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
         .screen.active { display: block; }
-        
-        .menu-item { background: var(--card); padding: 16px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; border: 1px solid #333; transition: 0.2s; }
-        .menu-item:active { background: #333; }
+        .menu-item { background: var(--card); padding: 16px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; border: 1px solid #333; }
         .menu-item.locked { opacity: 0.4; pointer-events: none; }
-        .item-info { flex: 1; }
-        .item-info small { color: #888; display: block; font-size: 0.75rem; }
-
-        /* Board Style */
-        #board-container { width: 100%; max-width: 400px; margin: 0 auto; position: relative; }
-        #board { width: 100%; border: 2px solid #333; }
+        #board { width: 100%; max-width: 400px; margin: 0 auto; border: 2px solid #333; }
         .white-1e1d7 { background-color: var(--neo-l) !important; }
         .black-3c85d { background-color: var(--neo-d) !important; }
-
         .coach-panel { background: #21201d; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
         .btn-back { background: none; border: none; color: white; font-size: 1.1rem; padding: 10px 0; }
-        
-        /* Bot Selector */
-        .bot-card { background: #333; padding: 10px; border-radius: 5px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; }
-        .bot-card.active { border-color: var(--accent); background: #3d3d3d; }
+        .bot-card { background: #333; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
     <div class="w-100" style="max-width: 350px;">
-        <h2 class="text-center mb-4 text-success fw-bold">CHESSREPS LOGIN</h2>
+        <h2 class="text-center mb-4 text-success fw-bold">CHESSREPS</h2>
         <input type="text" id="username" class="form-control bg-dark text-white border-secondary mb-3" placeholder="Username">
-        <button onclick="handleAuth()" class="btn btn-success w-100 fw-bold">MASUK KE AKADEMI</button>
+        <button onclick="handleAuth()" class="btn btn-success w-100 fw-bold">START LEARNING</button>
     </div>
 </div>
 
 <div id="menu-screen" class="screen">
-    <h4 class="mb-4 fw-bold"><i class="fas fa-chess-knight text-success"></i> ACADEMY</h4>
+    <h4 class="mb-4 fw-bold text-success">MAIN MENU</h4>
     <div id="main-menu-list">
-        <div class="menu-item" onclick="showSubMenu('basic')">
-            <div class="item-info"><strong>Basic Class</strong><small>Dasar pergerakan perwira</small></div>
-            <i class="fas fa-chevron-right text-secondary"></i>
-        </div>
-        <div class="menu-item locked" id="lock-mid" onclick="showSubMenu('mid')">
-            <div class="item-info"><strong>Mid Class</strong><small>Taktik & Kalkulasi menengah</small></div>
-            <i class="fas fa-lock text-secondary"></i>
-        </div>
-        <div class="menu-item locked" id="lock-high" onclick="showSubMenu('high')">
-            <div class="item-info"><strong>High Class</strong><small>Teori Grandmaster & Endgame</small></div>
-            <i class="fas fa-lock text-secondary"></i>
-        </div>
-        <div class="menu-item" onclick="showSubMenu('opening')">
-            <div class="item-info"><strong>Opening Book</strong><small>20+ Pembukaan Populer Dunia</small></div>
-            <i class="fas fa-book text-secondary"></i>
-        </div>
-        <div class="menu-item" onclick="changeScreen('bot-screen')">
-            <div class="item-info"><strong>Play vs Bot</strong><small>Latih kemampuanmu melawan AI</small></div>
-            <i class="fas fa-robot text-success"></i>
-        </div>
+        <div class="menu-item" onclick="showSubMenu('basic')">Basic Class</div>
+        <div class="menu-item" id="lock-mid" onclick="showSubMenu('mid')">Mid Class</div>
+        <div class="menu-item" id="lock-high" onclick="showSubMenu('high')">High Class</div>
+        <div class="menu-item" onclick="showSubMenu('opening')">Opening Book (20+)</div>
+        <div class="menu-item text-success" onclick="changeScreen('bot-screen')"><strong>PLAY VS BOT</strong></div>
     </div>
 </div>
 
 <div id="sub-menu-screen" class="screen">
-    <button class="btn-back" onclick="changeScreen('menu-screen')"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
+    <button class="btn-back" onclick="changeScreen('menu-screen')">← Kembali</button>
     <h4 id="sub-title" class="mb-3">Lessons</h4>
     <div id="sub-list"></div>
 </div>
 
 <div id="board-screen" class="screen">
-    <button class="btn-back" onclick="exitBoard()"><i class="fas fa-times me-2"></i> Keluar</button>
-    <div id="board-container">
-        <div id="board"></div>
-    </div>
+    <button class="btn-back" onclick="exitBoard()">✕ Keluar</button>
+    <div id="board"></div>
     <div class="coach-panel">
-        <strong class="text-success d-block mb-1"><i class="fas fa-user-tie"></i> Coach Explanation:</strong>
-        <div id="coach-msg" style="font-size: 0.9rem;">Analisis posisi...</div>
+        <div id="coach-msg">Selesaikan instruksi...</div>
     </div>
     <div class="d-flex gap-2 mt-3">
-        <button class="btn btn-dark flex-fill" onclick="undoMove()"><i class="fas fa-undo"></i></button>
-        <button class="btn btn-dark flex-fill" onclick="resetBoard()"><i class="fas fa-redo"></i></button>
+        <button class="btn btn-dark flex-fill" onclick="undoMove()">Undo</button>
+        <button class="btn btn-dark flex-fill" onclick="resetBoard()">Reset</button>
     </div>
 </div>
 
 <div id="bot-screen" class="screen">
-    <button class="btn-back" onclick="changeScreen('menu-screen')"><i class="fas fa-arrow-left"></i> Kembali</button>
-    <h4 class="mb-4">Pilih Lawan AI</h4>
-    <div class="bot-card" onclick="startBot('Beginner', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')">
-        <strong>👶 Beginner Bot</strong><small>Sering melakukan blunder, cocok untuk latihan dasar.</small>
-    </div>
-    <div class="bot-card" onclick="startBot('Intermediate', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')">
-        <strong>⚔️ Intermediate</strong><small>Memahami taktik dasar dan posisi.</small>
-    </div>
-    <div class="bot-card" onclick="startBot('Master', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')">
-        <strong>🧠 Grandmaster Bot</strong><small>Stockfish level tinggi. Nyaris mustahil dikalahkan.</small>
-    </div>
+    <button class="btn-back" onclick="changeScreen('menu-screen')">← Kembali</button>
+    <h4 class="mb-4">Pilih Level Bot</h4>
+    <div class="bot-card" onclick="startBot('Easy')">👶 Easy Bot (Random)</div>
+    <div class="bot-card" onclick="startBot('Normal')">⚔️ Normal Bot (Proactive)</div>
+    <div class="bot-card" onclick="startBot('Hard')">🧠 Hard Bot (Deep Search)</div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -113,59 +77,55 @@
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
 <script>
-    let board = null;
-    let game = new Chess();
-    let currentUser = null;
-    let activeLesson = null;
-    let isBotMode = false;
+    let board = null, game = new Chess(), currentUser = null, activeLesson = null, isBotMode = false;
 
     const library = {
         basic: [
-            { id: 'b1', name: "Pawn Move", fen: "8/8/8/8/8/8/PPPPPPPP/8 w - - 0 1", target: "e4", msg: "Pion melangkah 1 kotak ke depan (atau 2 pada langkah pertama). Gerakkan pion ke e4!" },
-            { id: 'b2', name: "Knight Move", fen: "8/8/8/8/8/8/8/1N6 w - - 0 1", target: "Nc3", msg: "Kuda melangkah dengan pola 'L' dan bisa melompati perwira lain. Gerakkan ke c3!" },
-            { id: 'b3', name: "Bishop Move", fen: "8/8/8/8/8/8/8/2B5 w - - 0 1", target: "Bf5", msg: "Gajah bergerak diagonal tanpa batas selama jalurnya kosong. Pindahkan ke f5!" },
-            { id: 'b4', name: "Rook Move", fen: "8/8/8/8/8/8/8/R7 w - - 0 1", target: "Ra5", msg: "Benteng bergerak lurus vertikal atau horizontal. Pindahkan ke a5!" },
-            { id: 'b5', name: "Queen Move", fen: "8/8/8/4Q3/8/8/8/8 w - - 0 1", target: "Qh8", msg: "Menteri adalah perwira terkuat, gabungan Benteng dan Gajah. Pindahkan ke h8!" },
-            { id: 'b6', name: "King Move", fen: "8/8/8/4K3/8/8/8/8 w - - 0 1", target: "e6", msg: "Raja hanya bisa bergerak 1 kotak ke segala arah. Amankan raja ke e6!" }
+            { id: 'b1', name: "Pawn Move", fen: "8/8/8/8/8/8/PPPPPPPP/8 w - - 0 1", target: "e4", msg: "Gerakkan pion Putih ke e4!" },
+            { id: 'b2', name: "Knight Move", fen: "8/8/8/8/8/8/8/1N6 w - - 0 1", target: "Nc3", msg: "Gerakkan Kuda Putih ke c3!" },
+            { id: 'b3', name: "Bishop Move", fen: "8/8/8/8/8/8/8/2B5 w - - 0 1", target: "Bf4", msg: "Gerakkan Gajah Putih ke f4!" },
+            { id: 'b4', name: "Rook Move", fen: "8/8/8/8/8/8/8/R7 w - - 0 1", target: "Ra5", msg: "Gerakkan Benteng Putih ke a5!" },
+            { id: 'b5', name: "Queen Move", fen: "8/8/8/4Q3/8/8/8/8 w - - 0 1", target: "Qh8", msg: "Pindahkan Menteri Putih ke h8!" },
+            { id: 'b6', name: "King Move", fen: "8/8/8/4K3/8/8/8/8 w - - 0 1", target: "e6", msg: "Amankan Raja Putih ke e6!" }
         ],
         mid: [
-            { id: 'm1', name: "Fork", fen: "6k1/8/3n4/8/1P1P4/2P5/8/6K1 b - - 0 1", target: "Ne4", msg: "Taktik Fork: Satu perwira mengancam dua atau lebih perwira lawan sekaligus. Gunakan Kuda ke e4!" },
-            { id: 'm2', name: "Pin", fen: "4r1k1/8/4q3/4R3/8/8/8/6K1 w - - 0 1", target: "Rxe6", msg: "Pin: Menahan perwira lawan agar tidak bisa bergerak karena ada raja/menteri di belakangnya. Makan menteri itu!" },
-            { id: 'm3', name: "Check", fen: "6k1/6pp/8/6R1/8/8/8/6K1 w - - 0 1", target: "Rg8", msg: "Check adalah serangan langsung ke Raja. Gerakkan Benteng untuk memberi skak!" },
-            { id: 'm4', name: "Ster (Threat Queen)", fen: "6k1/6pp/4q3/8/5N2/8/8/6K1 w - - 0 1", target: "Ne6", msg: "Ster adalah istilah saat kamu mengancam Menteri lawan. Ancam menteri putih dengan kuda!" },
-            { id: 'm5', name: "Basic Checkmate", fen: "6k1/5ppp/8/8/8/8/1R6/1R4K1 w - - 0 1", target: "Rb8", msg: "Checkmate: Raja diserang dan tidak punya jalan keluar. Lakukan Back-rank mate!" }
+            { id: 'm1', name: "Fork", fen: "6k1/8/3n4/8/1P1P4/2P5/8/6K1 b - - 0 1", target: "Ne4", msg: "Gunakan Kuda Hitam untuk Fork pion d4 dan c3!" },
+            { id: 'm2', name: "Pin", fen: "4r1k1/8/4q3/4R3/8/8/8/6K1 w - - 0 1", target: "Rxe6", msg: "Pin Menteri lawan dan makan dengan Benteng!" },
+            { id: 'm3', name: "Ster (Threat Queen)", fen: "6k1/6pp/4q3/8/5N2/8/8/6K1 w - - 0 1", target: "Nxe6", msg: "Kuda Putih mengancam Menteri (Ster). Makan Menterinya!" }
         ],
         high: [
-            { id: 'h1', name: "Force Checkmate", fen: "k7/1Q6/2K5/8/8/8/8/8 w - - 0 1", target: "NONE", msg: "Dalam posisi ini, Putih memiliki kemenangan paksa. Paksa Raja lawan ke sudut." },
-            { id: 'h2', name: "Draw (Stalemate)", fen: "k7/1P6/2K5/8/8/8/8/8 w - - 0 1", target: "NONE", msg: "Stalemate terjadi jika pemain tidak bisa melangkah tapi tidak dalam posisi skak. Hati-hati jangan sampai remis!" },
-            { id: 'h3', name: "Blunder vs Brilliant", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3", target: "NONE", msg: "Langkah brilian biasanya berupa pengorbanan, sedangkan blunder adalah kesalahan fatal." },
-            { id: 'h4', name: "How to be Master", fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", target: "NONE", msg: "Seorang Master mempelajari pola endgame dan struktur pion secara mendalam." }
+            { id: 'h1', name: "Stalemate Theory", fen: "k7/1P6/2K5/8/8/8/8/8 w - - 0 1", target: "NONE", msg: "Pelajari posisi Stalemate: Raja hitam tidak bisa gerak tapi tidak skak." },
+            { id: 'h2', name: "Ladder Mate", fen: "6k1/8/8/8/8/8/1R6/1R4K1 w - - 0 1", target: "Rb8", msg: "Gunakan dua benteng untuk skakmat tangga!" }
         ],
         opening: [
-            { id: 'o1', name: "Ruy Lopez", fen: "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3", target: "NONE", msg: "Opening klasik untuk kontrol pusat." },
-            { id: 'o2', name: "Sicilian Defense", fen: "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2", target: "NONE", msg: "Respon agresif terhadap e4." },
-            { id: 'o3', name: "Caro-Kann", fen: "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2", target: "NONE", msg: "Pertahanan solid untuk hitam." }
-            // Tambahkan hingga 20+ sesuai kebutuhan
+            { id: 'o1', name: "Sicilian Defense", fen: "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2", target: "NONE", msg: "1. e4 c5" },
+            { id: 'o2', name: "Ruy Lopez", fen: "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3", target: "NONE", msg: "1. e4 e5 2. Nf3 Nc6 3. Bb5" },
+            { id: 'o3', name: "French Defense", fen: "rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", target: "NONE", msg: "1. e4 e6" },
+            { id: 'o4', name: "Caro-Kann", fen: "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", target: "NONE", msg: "1. e4 c6" },
+            { id: 'o5', name: "Italian Game", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3", target: "NONE", msg: "1. e4 e5 2. Nf3 Nc6 3. Bc4" },
+            { id: 'o6', name: "Queen's Gambit", fen: "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2", target: "NONE", msg: "1. d4 d5 2. c4" },
+            { id: 'o7', name: "King's Indian", fen: "rnbqkb1r/pppppp1p/5np1/8/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3", target: "NONE", msg: "1. d4 Nf6 2. c4 g6" },
+            { id: 'o8', name: "Scandinavian", fen: "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2", target: "NONE", msg: "1. e4 d5" },
+            { id: 'o9', name: "London System", fen: "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2", target: "NONE", msg: "1. d4 d5 2. Bf4" },
+            { id: 'o10', name: "Scotch Game", fen: "r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq d3 0 3", target: "NONE", msg: "1. e4 e5 2. Nf3 Nc6 3. d4" },
+            { id: 'o11', name: "Dutch Defense", fen: "rnbqkbnr/ppppp1pp/8/5p2/3P4/8/PPP1PPPP/RNBQKBNR w KQkq f6 0 2", target: "NONE", msg: "1. d4 f5" },
+            { id: 'o12', name: "Vienna Game", fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2", target: "NONE", msg: "1. e4 e5 2. Nc3" },
+            { id: 'o13', name: "Slav Defense", fen: "rnbqkbnr/pp2pppp/2p5/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3", target: "NONE", msg: "1. d4 d5 2. c4 c6" },
+            { id: 'o14', name: "English Opening", fen: "rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq c3 0 1", target: "NONE", msg: "1. c4" },
+            { id: 'o15', name: "Alekhine Defense", fen: "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2", target: "NONE", msg: "1. e4 Nf6" },
+            { id: 'o16', name: "Modern Defense", fen: "rnbqkbnr/pppppp1p/6p1/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", target: "NONE", msg: "1. e4 g6" },
+            { id: 'o17', name: "Nimzo-Indian", fen: "rnbqk2r/pppp1ppp/4pn2/8/2PP4/2N5/PP2PPPP/R1BQKBNR b KQkq - 2 3", target: "NONE", msg: "1. d4 Nf6 2. c4 e6 3. Nc3 Bb4" },
+            { id: 'o18', name: "Benko Gambit", fen: "rnbqkb1r/3ppp1p/p4np1/1pP5/2P5/5N2/PP2PPPP/RNBQKB1R w KQkq b6 0 5", target: "NONE", msg: "1. d4 Nf6 2. c4 c5 3. d5 b5" },
+            { id: 'o19', name: "Evans Gambit", fen: "r1bqk1nr/pppp1ppp/2n5/1B2p3/1b1PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4", target: "NONE", msg: "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4" },
+            { id: 'o20', name: "King's Gambit", fen: "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq f3 0 2", target: "NONE", msg: "1. e4 e5 2. f4" }
         ]
     };
 
-    // Fungsi Auth & UI
     function handleAuth() {
         const user = document.getElementById('username').value;
         if(!user) return;
-        currentUser = JSON.parse(localStorage.getItem('cr_user_'+user)) || { name:user, completed:[] };
-        save();
+        currentUser = JSON.parse(localStorage.getItem('cr_'+user)) || { name:user, completed:[] };
         changeScreen('menu-screen');
-        updateLocks();
-    }
-
-    function save() { localStorage.setItem('cr_user_'+currentUser.name, JSON.stringify(currentUser)); }
-
-    function updateLocks() {
-        const basicOk = library.basic.every(l => currentUser.completed.includes(l.id));
-        const midOk = library.mid.every(l => currentUser.completed.includes(l.id));
-        if(basicOk) $('#lock-mid').removeClass('locked').find('.fa-lock').attr('class', 'fas fa-check text-success');
-        if(midOk) $('#lock-high').removeClass('locked').find('.fa-lock').attr('class', 'fas fa-check text-success');
     }
 
     function changeScreen(id) {
@@ -178,88 +138,69 @@
     function showSubMenu(cat) {
         const list = document.getElementById('sub-list');
         list.innerHTML = '';
-        document.getElementById('sub-title').innerText = cat.toUpperCase() + " CLASS";
-        
+        document.getElementById('sub-title').innerText = cat.toUpperCase();
         library[cat].forEach((item, i) => {
-            const isDone = currentUser.completed.includes(item.id);
-            const isLocked = i > 0 && !currentUser.completed.includes(library[cat][i-1].id) && cat !== 'opening';
-            
             const div = document.createElement('div');
-            div.className = `menu-item ${isLocked ? 'locked' : ''}`;
-            div.innerHTML = `
-                <div class="item-info"><strong>${isDone ? '✅' : i+1+'.'} ${item.name}</strong></div>
-                <i class="fas ${isLocked ? 'fa-lock' : 'fa-play text-success'}"></i>
-            `;
-            if(!isLocked) div.onclick = () => startLesson(item);
+            div.className = 'menu-item';
+            div.innerHTML = `<span>${i+1}. ${item.name}</span>`;
+            div.onclick = () => startLesson(item);
             list.appendChild(div);
         });
         changeScreen('sub-menu-screen');
     }
 
-    // Board Logic
     function startLesson(item) {
-        activeLesson = item;
-        isBotMode = false;
+        activeLesson = item; isBotMode = false;
         game.load(item.fen);
         changeScreen('board-screen');
-        
-        if(!board) {
-            board = Chessboard('board', {
-                draggable: true, position: item.fen, onDrop: onDrop,
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-            });
-        } else {
-            board.position(item.fen);
-        }
+        initBoard(item.fen);
         document.getElementById('coach-msg').innerText = item.msg;
     }
 
-    function startBot(level, fen) {
-        isBotMode = true;
-        game.load(fen);
+    function startBot(level) {
+        isBotMode = true; game.reset();
         changeScreen('board-screen');
-        if(!board) {
-            board = Chessboard('board', {
-                draggable: true, position: 'start', onDrop: onDrop,
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-            });
-        } else {
-            board.start();
-        }
-        document.getElementById('coach-msg').innerText = "Mode Bot: " + level + ". Semoga beruntung!";
+        initBoard('start');
+        document.getElementById('coach-msg').innerText = `Bot ${level} aktif. Kamu Putih.`;
     }
 
-    function onDrop(source, target) {
-        let move = game.move({ from: source, to: target, promotion: 'q' });
-        if (move === null) return 'snapback';
+    function initBoard(pos) {
+        const cfg = {
+            draggable: true, position: pos, onDrop: handleMove,
+            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+        };
+        if(!board) board = Chessboard('board', cfg);
+        else board.position(pos);
+    }
 
-        if(!isBotMode && activeLesson.target !== "NONE") {
+    function handleMove(source, target) {
+        const move = game.move({ from: source, to: target, promotion: 'q' });
+        if (!move) return 'snapback';
+
+        if(isBotMode) {
+            window.setTimeout(makeBotMove, 250);
+        } else if(activeLesson.target !== "NONE") {
             if(move.san === activeLesson.target || move.to === activeLesson.target) {
-                document.getElementById('coach-msg').innerHTML = "<span class='text-success fw-bold'>Langkah Sempurna!</span>";
-                if(!currentUser.completed.includes(activeLesson.id)) {
-                    currentUser.completed.push(activeLesson.id);
-                    save();
-                    updateLocks();
-                }
-                setTimeout(() => showSubMenu('basic'), 1500); // Redirect back
+                document.getElementById('coach-msg').innerText = "Bagus! Kamu berhasil.";
+                currentUser.completed.push(activeLesson.id);
+                localStorage.setItem('cr_'+currentUser.name, JSON.stringify(currentUser));
             } else {
-                game.undo();
-                return 'snapback';
+                game.undo(); return 'snapback';
             }
         }
     }
 
-    function exitBoard() {
-        changeScreen(isBotMode ? 'bot-screen' : 'sub-menu-screen');
+    function makeBotMove() {
+        const moves = game.moves();
+        if (moves.length === 0) return;
+        const randomMove = moves[Math.floor(Math.random() * moves.length)];
+        game.move(randomMove);
+        board.position(game.fen());
     }
 
     function undoMove() { game.undo(); board.position(game.fen()); }
-    function resetBoard() { 
-        if(isBotMode) { game.reset(); board.start(); }
-        else { game.load(activeLesson.fen); board.position(activeLesson.fen); }
-    }
-
-    window.onresize = () => board && board.resize();
+    function resetBoard() { isBotMode ? game.reset() : game.load(activeLesson.fen); board.position(game.fen()); }
+    function exitBoard() { changeScreen(isBotMode ? 'bot-screen' : 'sub-menu-screen'); }
 </script>
 </body>
 </html>
