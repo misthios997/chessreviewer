@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChessReps Clone - Neo</title>
+    <title>ChessReps Pro - Auth Fixed</title>
     
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,110 +11,110 @@
     
     <style>
         :root { --bg: #0a0a0a; --card: #1a1a1a; --accent: #81b64c; --text-muted: #8b8987; --neo-l: #ebecd0; --neo-d: #779556; }
-        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
         
-        /* Login Screen */
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: var(--card); padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; border: 1px solid #333; }
+        .auth-card { background: var(--card); padding: 30px; border-radius: 15px; width: 100%; max-width: 380px; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-        /* Main Screen Layout */
-        .screen { display: none; height: 100vh; overflow-y: auto; padding-bottom: 50px; }
+        .screen { display: none; height: 100vh; overflow-y: auto; padding-bottom: 80px; }
         .screen.active { display: block; }
-        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 450px; margin: 0 auto; padding: 20px; }
 
-        /* Card Style (Sesuai Gambar) */
-        .course-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #2a2a2a; display: flex; gap: 15px; align-items: start; transition: 0.2s; cursor: pointer; }
-        .course-card:hover { border-color: var(--accent); }
-        .course-img { width: 80px; height: 80px; border-radius: 8px; border: 1px solid #333; }
-        .course-info { flex: 1; }
-        .course-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
-        .course-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.3; }
-        .progress-bar-wrap { height: 6px; background: #333; border-radius: 3px; margin-top: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #9b51e0; width: 0%; transition: 0.5s; }
+        .course-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #2a2a2a; display: flex; gap: 15px; align-items: center; cursor: pointer; }
+        .course-img { width: 60px; height: 60px; border-radius: 8px; }
+        .progress-bar-wrap { height: 4px; background: #333; border-radius: 2px; margin-top: 8px; }
+        .progress-fill { height: 100%; background: #9b51e0; width: 0%; transition: 0.4s; }
 
-        /* Board Styling */
-        #board-area { background: var(--bg); height: 100vh; display: flex; flex-direction: column; }
-        #board { width: 100vw; max-width: 450px; margin: 0 auto; }
+        #board { width: 100vw; max-width: 400px; margin: 0 auto; }
         .white-1e1d7 { background-color: var(--neo-l) !important; }
         .black-3c85d { background-color: var(--neo-d) !important; }
-
-        .instruction-box { background: #1a1a1a; padding: 20px; border-top: 1px solid #333; flex: 1; }
-        .btn-action { background: #333; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 0.9rem; }
+        
+        .coach-msg-box { background: #1a1a1a; padding: 15px; border-left: 4px solid var(--accent); margin-top: 15px; min-height: 60px; }
+        .btn-neo { font-weight: bold; border-radius: 8px; padding: 10px; transition: 0.2s; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
     <div class="auth-card">
-        <h2 class="text-center mb-4 fw-bold">ChessReps <span class="text-success">Neo</span></h2>
-        <input type="text" id="login-user" class="form-control bg-dark text-white border-secondary mb-3" placeholder="Username">
-        <input type="password" id="login-pass" class="form-control bg-dark text-white border-secondary mb-4" placeholder="Password">
-        <button onclick="auth()" class="btn btn-success w-100 fw-bold py-2">MASUK / DAFTAR</button>
+        <h2 class="text-center mb-4 fw-bold text-success">ChessReps</h2>
+        <div class="mb-3">
+            <input type="text" id="auth-user" class="form-control bg-dark text-white border-secondary" placeholder="Username">
+        </div>
+        <div class="mb-4">
+            <input type="password" id="auth-pass" class="form-control bg-dark text-white border-secondary" placeholder="Password">
+        </div>
+        <div class="d-grid gap-2">
+            <button onclick="handleAuth('login')" class="btn btn-success btn-neo">MASUK (LOGIN)</button>
+            <button onclick="handleAuth('register')" class="btn btn-outline-light btn-neo">DAFTAR AKUN BARU</button>
+        </div>
+        <p id="auth-msg" class="text-center mt-3 small text-danger"></p>
     </div>
 </div>
 
 <div id="menu-screen" class="screen">
     <div class="container">
-        <h3 class="fw-bold mb-4 mt-3">Chess Courses</h3>
-        <div id="course-list">
-            <div class="course-card" onclick="openCategory('basic')">
-                <img src="https://images.chesscomfiles.com/uploads/v1/piece_set/neo/150/wp.png" class="course-img">
-                <div class="course-info">
-                    <div class="course-title">Basic Modules</div>
-                    <div class="course-desc">Pelajari gerakan dasar perwira dan aturan main.</div>
-                    <div class="progress-bar-wrap"><div class="progress-fill" id="pb-basic"></div></div>
-                </div>
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+            <h4 class="fw-bold m-0">Halo, <span id="user-name-display" class="text-success">...</span></h4>
+            <button onclick="logout()" class="btn btn-sm btn-dark">Keluar</button>
+        </div>
+
+        <div class="course-card" onclick="openCategory('basic')">
+            <img src="https://images.chesscomfiles.com/uploads/v1/piece_set/neo/150/wp.png" class="course-img">
+            <div class="flex-grow-1">
+                <div class="fw-bold">Basic Modules</div>
+                <div class="progress-bar-wrap"><div class="progress-fill" id="pb-basic"></div></div>
             </div>
-            <div class="course-card" onclick="openCategory('mid')">
-                <img src="https://images.chesscomfiles.com/uploads/v1/piece_set/neo/150/wn.png" class="course-img">
-                <div class="course-info">
-                    <div class="course-title">Mid Class (Tactics)</div>
-                    <div class="course-desc">Fork, Pin, En Passant, dan Castling.</div>
-                    <div class="progress-bar-wrap"><div class="progress-fill" id="pb-mid"></div></div>
-                </div>
+        </div>
+
+        <div class="course-card" onclick="openCategory('mid')">
+            <img src="https://images.chesscomfiles.com/uploads/v1/piece_set/neo/150/wn.png" class="course-img">
+            <div class="flex-grow-1">
+                <div class="fw-bold">Mid Class</div>
+                <div class="progress-bar-wrap"><div class="progress-fill" id="pb-mid"></div></div>
             </div>
-            <div class="course-card" onclick="openCategory('high')">
-                <img src="https://images.chesscomfiles.com/uploads/v1/piece_set/neo/150/wr.png" class="course-img">
-                <div class="course-info">
-                    <div class="course-title">High Class (Endgame)</div>
-                    <div class="course-desc">Ladder Mate dan teknik skakmat mematikan.</div>
-                    <div class="progress-bar-wrap"><div class="progress-fill" id="pb-high"></div></div>
-                </div>
+        </div>
+
+        <div class="course-card" onclick="openCategory('high')">
+            <img src="https://images.chesscomfiles.com/uploads/v1/piece_set/neo/150/wr.png" class="course-img">
+            <div class="flex-grow-1">
+                <div class="fw-bold">High Class</div>
+                <div class="progress-bar-wrap"><div class="progress-fill" id="pb-high"></div></div>
             </div>
-            <div class="course-card" onclick="startBotMode()">
-                <img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="course-img" style="filter: invert(1);">
-                <div class="course-info">
-                    <div class="course-title">Play vs Bot</div>
-                    <div class="course-desc">Uji kemampuanmu melawan AI di papan Neo.</div>
-                </div>
-            </div>
+        </div>
+
+        <div class="course-card" onclick="startBotMode()">
+            <i class="fas fa-robot fa-3x text-secondary mx-2"></i>
+            <div class="fw-bold">Play vs Bot</div>
         </div>
     </div>
 </div>
 
 <div id="sub-screen" class="screen">
     <div class="container">
-        <button class="btn text-white p-0 mb-4" onclick="changeScreen('menu-screen')">← Back to Courses</button>
-        <h4 id="sub-header" class="fw-bold mb-4">Lessons</h4>
+        <button class="btn btn-link text-white text-decoration-none p-0 mb-4" onclick="changeScreen('menu-screen')">← Kembali</button>
+        <h4 id="sub-header" class="fw-bold mb-3">Materi</h4>
         <div id="lesson-list"></div>
     </div>
 </div>
 
 <div id="board-screen" class="screen">
-    <div id="board-area">
+    <div class="container p-0">
         <div class="p-3 d-flex justify-content-between align-items-center">
-            <button class="btn btn-sm text-white" onclick="changeScreen('sub-screen')">← Exit</button>
-            <div id="lesson-title-ui" class="fw-bold">Lesson</div>
-            <div></div>
+            <button class="btn btn-sm text-secondary" onclick="exitLesson()">Tutup</button>
+            <div id="header-title" class="small fw-bold">Pelajaran</div>
+            <div style="width:40px"></div>
         </div>
         
         <div id="board"></div>
 
-        <div class="instruction-box">
-            <p id="coach-msg" class="text-white-50">Silakan lakukan langkah yang diminta...</p>
-            <div class="d-flex gap-2 mt-4">
-                <button class="btn-action flex-fill" onclick="undoMove()"><i class="fas fa-undo"></i> Undo</button>
-                <button class="btn-action flex-fill" onclick="resetBoard()"><i class="fas fa-redo"></i> Reset</button>
+        <div class="px-3">
+            <div class="coach-msg-box">
+                <div id="coach-text" class="small text-white-50">Ikuti instruksi...</div>
+            </div>
+            <div class="row gx-2 mt-3">
+                <div class="col-6"><button class="btn btn-dark w-100" onclick="undo()">Undo</button></div>
+                <div class="col-6"><button class="btn btn-dark w-100" onclick="reset()">Reset</button></div>
             </div>
         </div>
     </div>
@@ -125,48 +125,60 @@
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
 <script>
-    let board = null;
-    let game = new Chess();
-    let currentUser = null;
-    let activeLesson = null;
-    let isBotMode = false;
+    let board = null, game = new Chess(), currentUser = null, activeLesson = null, isBot = false;
 
     const db = {
         basic: [
-            { id: 'b1', name: "Pawn Move", fen: "8/8/8/8/8/8/PPPPPPPP/8 w - - 0 1", goal: "e4", msg: "Gerakkan pion ke tengah (e4)." },
-            { id: 'b2', name: "Knight Jumps", fen: "8/8/8/8/8/8/8/1N6 w - - 0 1", goal: "Nc3", msg: "Gunakan Kuda ke petak Nc3." }
+            { id: 'b1', name: "Pawn Move", fen: "8/8/8/8/8/8/PPPPPPPP/8 w - - 0 1", goal: "e4", msg: "Gerakkan pion ke e4 untuk mengontrol pusat." },
+            { id: 'b2', name: "Knight Move", fen: "8/8/8/8/8/8/8/1N6 w - - 0 1", goal: "Nc3", msg: "Kuda melompat dengan pola L. Gerakkan ke c3." }
         ],
         mid: [
-            { id: 'm1', name: "Promotion", fen: "4k3/P7/8/8/8/8/8/4K3 w - - 0 1", goal: "a8=Q", msg: "Dorong pion ke baris terakhir untuk Promosi!" },
-            { id: 'm2', name: "En Passant", fen: "rnbqkbnr/pp1ppppp/8/2pP4/8/8/PPP1PPPP/RNBQKBNR w KQkq c6 0 2", goal: "dxc6", msg: "Lakukan En Passant pada pion c5." },
-            { id: 'm3', name: "Castling", fen: "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1", goal: "O-O", msg: "Amankan Raja dengan Rokade Pendek." }
+            { id: 'm1', name: "Promotion", fen: "4k3/P7/8/8/8/8/8/4K3 w - - 0 1", goal: "a8=Q", msg: "Promosikan pion menjadi Menteri!" },
+            { id: 'm2', name: "En Passant", fen: "rnbqkbnr/pp1ppppp/8/2pP4/8/8/PPP1PPPP/RNBQKBNR w KQkq c6 0 2", goal: "dxc6", msg: "Gunakan En Passant untuk memakan pion lawan." }
         ],
         high: [
-            { id: 'h1', name: "Ladder Mate", fen: "6k1/8/8/8/8/8/1R6/2R3K1 w - - 0 1", goal: "Rc8#", msg: "Lakukan Skakmat Tangga (Ladder Mate)!" }
+            { id: 'h1', name: "Ladder Mate", fen: "6k1/8/8/8/8/8/1R6/2R3K1 w - - 0 1", goal: "Rc8#", msg: "Gunakan benteng secara bergantian untuk skakmat tangga!" }
         ]
     };
 
-    function auth() {
-        const u = $('#login-user').val(), p = $('#login-pass').val();
-        if(!u || !p) return alert("Isi semua data!");
-        currentUser = JSON.parse(localStorage.getItem('chess_'+u)) || { name: u, pass: p, done: [] };
-        if(currentUser.pass !== p) return alert("Password salah!");
-        localStorage.setItem('chess_'+u, JSON.stringify(currentUser));
-        updateUIProgress();
+    // --- AUTH LOGIC ---
+    function handleAuth(type) {
+        const u = $('#auth-user').val().trim(), p = $('#auth-pass').val();
+        const error = $('#auth-msg');
+        if(!u || !p) return error.text("Username/Password kosong!");
+
+        let accounts = JSON.parse(localStorage.getItem('chess_accounts')) || {};
+
+        if(type === 'register') {
+            if(accounts[u]) return error.text("Username sudah terdaftar!");
+            accounts[u] = { pass: p, done: [] };
+            localStorage.setItem('chess_accounts', JSON.stringify(accounts));
+            alert("Pendaftaran Berhasil! Silakan Login.");
+        } else {
+            if(!accounts[u] || accounts[u].pass !== p) return error.text("Login Gagal! Akun tidak ditemukan/salah.");
+            currentUser = { name: u, ...accounts[u] };
+            loginSuccess();
+        }
+    }
+
+    function loginSuccess() {
+        $('#user-name-display').text(currentUser.name);
+        updateProgressBars();
         changeScreen('menu-screen');
+        $('#auth-screen').fadeOut();
     }
 
-    function updateUIProgress() {
-        ['basic', 'mid', 'high'].forEach(cat => {
-            const total = db[cat].length;
-            const done = db[cat].filter(l => currentUser.done.includes(l.id)).length;
-            $(`#pb-${cat}`).css('width', (done/total*100) + '%');
-        });
+    function saveProgress() {
+        let accounts = JSON.parse(localStorage.getItem('chess_accounts'));
+        accounts[currentUser.name].done = currentUser.done;
+        localStorage.setItem('chess_accounts', JSON.stringify(accounts));
+        updateProgressBars();
     }
 
+    // --- NAVIGATION ---
     function openCategory(cat) {
         const list = $('#lesson-list').empty();
-        $('#sub-header').text(cat.toUpperCase() + " MODULES");
+        $('#sub-header').text(cat.toUpperCase());
         db[cat].forEach(item => {
             const isDone = currentUser.done.includes(item.id);
             list.append(`
@@ -179,42 +191,49 @@
     }
 
     function startLesson(item) {
-        activeLesson = item; isBotMode = false;
+        activeLesson = item; isBot = false;
         game.load(item.fen);
         changeScreen('board-screen');
-        $('#lesson-title-ui').text(item.name);
-        $('#coach-msg').text(item.msg);
+        $('#header-title').text(item.name);
+        $('#coach-text').text(item.msg);
         initBoard(item.fen);
     }
 
     function startBotMode() {
-        isBotMode = true; game.reset();
+        isBot = true; game.reset();
         changeScreen('board-screen');
-        $('#lesson-title-ui').text("VS Bot (Easy)");
+        $('#header-title').text("VS Bot (Easy)");
         initBoard('start');
     }
 
     function initBoard(pos) {
         if(board) board.destroy();
         board = Chessboard('board', {
-            draggable: true, position: pos, onDrop: handleMove,
+            draggable: true, position: pos, onDrop: handleDrop,
             pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         });
     }
 
-    function handleMove(src, tgt) {
+    function handleDrop(src, tgt) {
         let move = game.move({ from: src, to: tgt, promotion: 'q' });
         if (!move) return 'snapback';
 
-        if(isBotMode) {
-            setTimeout(makeRandomMove, 500);
+        if(isBot) {
+            setTimeout(() => {
+                const moves = game.moves();
+                if(moves.length > 0) {
+                    game.move(moves[Math.floor(Math.random()*moves.length)]);
+                    board.position(game.fen());
+                }
+            }, 400);
         } else {
-            // Logika Ladder Mate / Goal
-            if(move.san === activeLesson.goal || (activeLesson.id === 'h1' && game.in_checkmate())) {
-                $('#coach-msg').html("<span class='text-success fw-bold'>Great! Lesson Complete.</span>");
+            // Perbaikan Logika Ladder Mate
+            const isLadderMate = (activeLesson.id === 'h1' && game.in_checkmate());
+            if(move.san === activeLesson.goal || isLadderMate) {
+                $('#coach-text').html("<b class='text-success'>Luar Biasa!</b> Materi ini telah kamu selesaikan.");
                 if(!currentUser.done.includes(activeLesson.id)) {
                     currentUser.done.push(activeLesson.id);
-                    localStorage.setItem('chess_'+currentUser.name, JSON.stringify(currentUser));
+                    saveProgress();
                 }
             } else {
                 game.undo(); return 'snapback';
@@ -222,11 +241,12 @@
         }
     }
 
-    function makeRandomMove() {
-        const moves = game.moves();
-        if(moves.length === 0) return alert("Game Over!");
-        game.move(moves[Math.floor(Math.random()*moves.length)]);
-        board.position(game.fen());
+    function updateProgressBars() {
+        ['basic', 'mid', 'high'].forEach(cat => {
+            const total = db[cat].length;
+            const done = db[cat].filter(l => currentUser.done.includes(l.id)).length;
+            $(`#pb-${cat}`).css('width', (done/total*100) + '%');
+        });
     }
 
     function changeScreen(id) {
@@ -235,11 +255,10 @@
         if(board) board.resize();
     }
 
-    function undoMove() { game.undo(); board.position(game.fen()); }
-    function resetBoard() { 
-        if(isBotMode) game.reset(); else game.load(activeLesson.fen); 
-        board.position(game.fen()); 
-    }
+    function exitLesson() { changeScreen(isBot ? 'menu-screen' : 'sub-screen'); }
+    function undo() { game.undo(); board.position(game.fen()); }
+    function reset() { if(isBot) game.reset(); else game.load(activeLesson.fen); board.position(game.fen()); }
+    function logout() { location.reload(); }
 </script>
 </body>
 </html>
